@@ -14,7 +14,6 @@ export default function NovoLiderPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [login, setLogin] = useState("");
@@ -43,7 +42,6 @@ export default function NovoLiderPage() {
       const result = await inviteLeaderAction({
         firstName,
         lastName,
-        email,
       });
 
       if (result.ok) {
@@ -136,18 +134,6 @@ export default function NovoLiderPage() {
                   value={login}
                   disabled
                   className="bg-muted"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail do Líder</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="lider@exemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
               </div>
 

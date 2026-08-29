@@ -12,7 +12,6 @@ Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de
 - Better Auth 1.6.22+
 - Drizzle ORM 0.45.2+
 - PostgreSQL (Neon)
-- Resend SDK
 - Vitest
 - Playwright
 

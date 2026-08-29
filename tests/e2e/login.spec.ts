@@ -24,6 +24,7 @@ test.describe("Login", () => {
 
     if (!email || !password) {
       test.skip(true, "Credenciais de teste nao configuradas");
+      return;
     }
 
     await page.getByLabel(/e-mail/i).fill(email);

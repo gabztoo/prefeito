@@ -11,7 +11,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 interface NavItem {
   label: string;
@@ -30,7 +30,6 @@ const navItems: NavItem[] = [
     label: "Campanhas",
     href: "/dashboard/campanhas",
     icon: Vote,
-    adminOnly: true,
   },
   {
     label: "Líderes",
@@ -51,7 +50,6 @@ interface DashboardSideBarProps {
 
 export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const isAdmin = userRole === "admin";
 
   const filteredNavItems = navItems.filter(
@@ -74,9 +72,10 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
         <nav className="flex flex-col h-full justify-between items-start w-full space-y-1">
           <div className="w-full space-y-1 p-4">
             {filteredNavItems.map((item) => (
-              <div
+              <Link
                 key={item.href}
-                onClick={() => router.push(item.href)}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
                 className={clsx(
                   "flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
                   pathname === item.href
@@ -84,16 +83,17 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4" aria-hidden="true" />
                 {item.label}
-              </div>
+              </Link>
             ))}
           </div>
 
           <div className="flex flex-col gap-2 w-full">
             <div className="px-4">
-              <div
-                onClick={() => router.push("/dashboard/settings")}
+              <Link
+                href="/dashboard/settings"
+                aria-current={pathname === "/dashboard/settings" ? "page" : undefined}
                 className={clsx(
                   "flex items-center w-full gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
                   pathname === "/dashboard/settings"
@@ -101,9 +101,9 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4" aria-hidden="true" />
                 Configurações
-              </div>
+              </Link>
             </div>
             <UserProfile />
           </div>

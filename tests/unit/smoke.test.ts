@@ -36,8 +36,8 @@ describe("Starter cleanup", () => {
       fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf-8")
     );
     expect(packageJson.dependencies?.["next"]).toMatch(/^15\.5\./);
-    expect(packageJson.dependencies?.["better-auth"]).toMatch(/^1\.6\./);
-    expect(packageJson.dependencies?.["drizzle-orm"]).toMatch(/^0\.45\./);
+    expect(packageJson.dependencies?.["better-auth"]).toMatch(/^\^?1\.6\./);
+    expect(packageJson.dependencies?.["drizzle-orm"]).toMatch(/^\^?0\.45\./);
   });
 
   it("should have required scripts", () => {

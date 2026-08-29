@@ -24,7 +24,7 @@ export function computeBucketHash(
  * Check if honeypot field is filled
  */
 export function isHoneypotFilled(value: string | undefined | null): boolean {
-  return value !== undefined && value !== null && value.trim().length > 0;
+  return value !== undefined && value !== null && value.length > 0;
 }
 
 /**

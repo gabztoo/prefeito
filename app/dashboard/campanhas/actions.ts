@@ -2,13 +2,15 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import {
   createCampaign,
   updateCampaign,
   transitionCampaign,
   listCampaigns,
   getCampaign,
+  assignLeaderToCampaign,
+  listLeaderCampaignLinks,
   CampaignStatus,
 } from "@/lib/services/campaign";
 import { ActionResult } from "@/lib/types";
@@ -130,6 +132,74 @@ export async function transitionCampaignAction(
   };
 }
 
+export async function assignLeaderToCampaignAction(
+  campaignId: string,
+  leaderId: string
+): Promise<ActionResult<{ id: string; publicCode: string }>> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para vincular um líder",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem vincular líderes",
+    };
+  }
+
+  const linkResult = await assignLeaderToCampaign(campaignId, leaderId);
+  if (linkResult.ok) {
+    revalidatePath(`/dashboard/campanhas/${campaignId}`);
+  }
+
+  return linkResult;
+}
+
+export async function listLeaderCampaignLinksAction(): Promise<
+  ActionResult<
+    Array<{
+      campaignLeaderId: string;
+      campaignId: string;
+      campaignName: string;
+      campaignSlug: string;
+      campaignStatus: CampaignStatus;
+      publicCode: string;
+      active: boolean;
+    }>
+  >
+> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para listar seus links",
+    };
+  }
+
+  if (result.user?.role !== "leader") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas líderes possuem links de cadastro",
+    };
+  }
+
+  return listLeaderCampaignLinks(result.session.userId);
+}
+
 export async function listCampaignsAction(options?: {
   page?: number;
   limit?: number;
@@ -189,6 +259,8 @@ export async function getCampaignAction(
     leaders: Array<{
       id: string;
       leaderId: string;
+      leaderName: string;
+      leaderEmail: string;
       publicCode: string;
       active: boolean;
     }>;

@@ -7,6 +7,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!campaignSlug || !publicCode) {
       test.skip(true, "Link publico de teste nao configurado");
+      return;
     }
 
     await page.goto(`/c/${campaignSlug}/${publicCode}`);
@@ -23,6 +24,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!campaignSlug || !publicCode) {
       test.skip(true, "Link publico de teste nao configurado");
+      return;
     }
 
     await page.goto(`/c/${campaignSlug}/${publicCode}`);
@@ -36,6 +38,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!campaignSlug || !publicCode) {
       test.skip(true, "Link publico de teste nao configurado");
+      return;
     }
 
     await page.goto(`/c/${campaignSlug}/${publicCode}`);
@@ -52,6 +55,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!campaignSlug || !publicCode) {
       test.skip(true, "Link publico de teste nao configurado");
+      return;
     }
 
     await page.goto(`/c/${campaignSlug}/${publicCode}`);
@@ -76,6 +80,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!closedCampaignSlug || !publicCode) {
       test.skip(true, "Campanha fechada de teste nao configurada");
+      return;
     }
 
     await page.goto(`/c/${closedCampaignSlug}/${publicCode}`);
@@ -88,6 +93,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!revokedCampaignSlug || !publicCode) {
       test.skip(true, "Link revogado de teste nao configurado");
+      return;
     }
 
     await page.goto(`/c/${revokedCampaignSlug}/${publicCode}`);
@@ -100,6 +106,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!email || !password) {
       test.skip(true, "Credenciais de teste nao configuradas");
+      return;
     }
 
     await page.goto("/sign-in");
@@ -118,6 +125,7 @@ test.describe("Cadastro de Eleitor", () => {
 
     if (!email || !password) {
       test.skip(true, "Credenciais de teste nao configuradas");
+      return;
     }
 
     await page.goto("/sign-in");

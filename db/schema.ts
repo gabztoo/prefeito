@@ -19,6 +19,8 @@ export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  username: text("username").unique(),
+  mustChangePassword: boolean("mustChangePassword").notNull().default(false),
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
   role: text("role"),
@@ -186,7 +188,11 @@ export const registration_rate_limit = pgTable("registration_rate_limit", {
   expiresAt: timestamp("expiresAt").notNull(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-});
+}, (table) => ({
+  registrationRateLimitExpiresAtIdx: index(
+    "registration_rate_limit_expiresAt_idx"
+  ).on(table.expiresAt),
+}));
 
 export const audit_event = pgTable("audit_event", {
   id: uuid("id").primaryKey().defaultRandom(),

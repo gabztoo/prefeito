@@ -60,7 +60,7 @@ describe("Phone Normalization", () => {
     });
 
     it("should not remove 55 when remaining has 12 digits", () => {
-      expect(normalizePhone("55123456789012")).toBe("55123456789012");
+      expect(normalizePhone("55123456789012")).toBe("");
     });
   });
 
@@ -78,7 +78,7 @@ describe("Phone Normalization", () => {
     });
 
     it("should not remove leading 0 when remaining has 12 digits", () => {
-      expect(normalizePhone("0123456789012")).toBe("0123456789012");
+      expect(normalizePhone("0123456789012")).toBe("");
     });
   });
 

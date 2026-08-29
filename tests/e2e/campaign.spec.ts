@@ -7,6 +7,7 @@ test.describe("Campanhas", () => {
 
     if (!email || !password) {
       test.skip(true, "Credenciais de teste nao configuradas");
+      return;
     }
 
     await page.goto("/sign-in");

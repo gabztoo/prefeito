@@ -11,7 +11,6 @@ export type ActionResult<T> =
         | "LINK_INACTIVE"
         | "DUPLICATE_PHONE"
         | "RATE_LIMITED"
-        | "EMAIL_DELIVERY_FAILED"
         | "INTERNAL_ERROR"
         | "INVALID_TRANSITION";
       message: string;

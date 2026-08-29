@@ -13,10 +13,9 @@ const pool = new Pool({
 
 async function runMigration() {
   try {
-    const migrationSQL = readFileSync(
-      "db/migrations/0000_bored_grandmaster.sql",
-      "utf-8"
-    );
+    const migrationPath =
+      process.argv[2] ?? "db/migrations/0000_bored_grandmaster.sql";
+    const migrationSQL = readFileSync(migrationPath, "utf-8");
 
     // Split by statement-breakpoint and execute each statement
     const statements = migrationSQL
@@ -24,16 +23,14 @@ async function runMigration() {
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
 
+    await pool.query("BEGIN");
     for (let i = 0; i < statements.length; i++) {
-      const statement = statements[i];
       console.log(`Executing statement ${i + 1}/${statements.length}...`);
-      try {
-        await pool.query(statement);
-        console.log(`Statement ${i + 1} executed successfully`);
-      } catch (e: any) {
-        console.error(`Statement ${i + 1} failed:`, e.message);
-      }
+      await pool.query(statements[i]);
+      console.log(`Statement ${i + 1} executed successfully`);
     }
+
+    await pool.query("COMMIT");
 
     console.log("Migration completed!");
     await pool.end();

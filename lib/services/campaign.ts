@@ -1,12 +1,65 @@
 import { db } from "@/db/drizzle";
-import { campaign, campaign_leader } from "@/db/schema";
+import { campaign, campaign_leader, user } from "@/db/schema";
 import { eq, and, asc, desc, sql } from "drizzle-orm";
 import { ActionResult } from "@/lib/types";
+import crypto from "crypto";
 
 export enum CampaignStatus {
   DRAFT = "draft",
   OPEN = "open",
   CLOSED = "closed",
+}
+
+export interface LeaderCampaignLink {
+  campaignLeaderId: string;
+  campaignId: string;
+  campaignName: string;
+  campaignSlug: string;
+  campaignStatus: CampaignStatus;
+  publicCode: string;
+  active: boolean;
+}
+
+export interface PublicCampaignLink {
+  campaignName: string;
+  campaignSlug: string;
+  campaignStatus: CampaignStatus;
+  leaderName: string;
+  publicCode: string;
+  active: boolean;
+}
+
+export function generatePublicCode(): string {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
+export function buildPublicLinkPath(
+  campaignSlug: string,
+  publicCode: string
+): string {
+  return `/c/${campaignSlug}/${publicCode}`;
+}
+
+export function buildPublicLinkUrl(
+  baseUrl: string,
+  campaignSlug: string,
+  publicCode: string
+): string {
+  return `${baseUrl.replace(/\/$/, "")}${buildPublicLinkPath(
+    campaignSlug,
+    publicCode
+  )}`;
+}
+
+export function normalizeCampaignSlug(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 140);
 }
 
 export interface Campaign {
@@ -26,6 +79,8 @@ export interface CampaignWithLeaders extends Campaign {
   leaders: Array<{
     id: string;
     leaderId: string;
+    leaderName: string;
+    leaderEmail: string;
     publicCode: string;
     active: boolean;
   }>;
@@ -63,11 +118,20 @@ export async function createCampaign(
   userId: string
 ): Promise<ActionResult<Campaign>> {
   try {
+    const slug = normalizeCampaignSlug(data.slug);
+    if (!slug) {
+      return {
+        ok: false,
+        code: "VALIDATION_ERROR",
+        message: "Informe um slug válido para a campanha",
+      };
+    }
+
     const [newCampaign] = await db
       .insert(campaign)
       .values({
         name: data.name,
-        slug: data.slug,
+         slug,
         description: data.description || null,
         status: CampaignStatus.DRAFT,
         createdBy: userId,
@@ -86,6 +150,184 @@ export async function createCampaign(
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao criar campanha",
+    };
+  }
+}
+
+export async function assignLeaderToCampaign(
+  campaignId: string,
+  leaderId: string
+): Promise<ActionResult<{ id: string; publicCode: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [campaignRecord] = await tx
+        .select({ id: campaign.id, status: campaign.status })
+        .from(campaign)
+        .where(eq(campaign.id, campaignId))
+        .limit(1);
+
+      if (!campaignRecord) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Campanha não encontrada",
+        };
+      }
+
+      if (campaignRecord.status === CampaignStatus.CLOSED) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Não é possível vincular líderes a uma campanha encerrada",
+        };
+      }
+
+      const [leader] = await tx
+        .select({ id: user.id, role: user.role, banned: user.banned })
+        .from(user)
+        .where(eq(user.id, leaderId))
+        .limit(1);
+
+      if (!leader || leader.role !== "leader") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Líder não encontrado",
+        };
+      }
+
+      if (leader.banned) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Líder desativado não pode ser vinculado",
+        };
+      }
+
+      const [existingLink] = await tx
+        .select({ id: campaign_leader.id, publicCode: campaign_leader.publicCode })
+        .from(campaign_leader)
+        .where(
+          and(
+            eq(campaign_leader.campaignId, campaignId),
+            eq(campaign_leader.leaderId, leaderId)
+          )
+        )
+        .limit(1);
+
+      if (existingLink) {
+        return { ok: true, data: existingLink };
+      }
+
+      const [createdLink] = await tx
+        .insert(campaign_leader)
+        .values({
+          campaignId,
+          leaderId,
+          publicCode: generatePublicCode(),
+          active: true,
+        })
+        .returning({ id: campaign_leader.id, publicCode: campaign_leader.publicCode });
+
+      return {
+        ok: true,
+        data: createdLink,
+      };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao vincular líder à campanha",
+    };
+  }
+}
+
+export async function listLeaderCampaignLinks(
+  leaderId: string
+): Promise<ActionResult<LeaderCampaignLink[]>> {
+  try {
+    const links = await db
+      .select({
+        campaignLeaderId: campaign_leader.id,
+        campaignId: campaign.id,
+        campaignName: campaign.name,
+        campaignSlug: campaign.slug,
+        campaignStatus: campaign.status,
+        publicCode: campaign_leader.publicCode,
+        active: campaign_leader.active,
+      })
+      .from(campaign_leader)
+      .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
+      .where(
+        and(
+          eq(campaign_leader.leaderId, leaderId),
+          eq(campaign_leader.active, true)
+        )
+      )
+      .orderBy(desc(campaign.createdAt));
+
+    return {
+      ok: true,
+      data: links.map((link) => ({
+        ...link,
+        campaignStatus: link.campaignStatus as CampaignStatus,
+      })),
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao carregar os links das campanhas",
+    };
+  }
+}
+
+export async function resolvePublicLink(
+  campaignSlug: string,
+  publicCode: string
+): Promise<ActionResult<PublicCampaignLink>> {
+  try {
+    const [link] = await db
+      .select({
+        campaignName: campaign.name,
+        campaignSlug: campaign.slug,
+        campaignStatus: campaign.status,
+        leaderName: user.name,
+        publicCode: campaign_leader.publicCode,
+        active: campaign_leader.active,
+      })
+      .from(campaign_leader)
+      .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
+      .innerJoin(user, eq(user.id, campaign_leader.leaderId))
+      .where(
+        and(
+          eq(campaign.slug, campaignSlug),
+          eq(campaign_leader.publicCode, publicCode)
+        )
+      )
+      .limit(1);
+
+    if (!link) {
+      return {
+        ok: false,
+        code: "NOT_FOUND",
+        message: "Link de cadastro não encontrado",
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        ...link,
+        campaignStatus: link.campaignStatus as CampaignStatus,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao carregar o link de cadastro",
     };
   }
 }
@@ -122,12 +364,25 @@ export async function updateCampaign(
       };
     }
 
+    const updateData = {
+      ...data,
+      ...(data.slug !== undefined
+        ? { slug: normalizeCampaignSlug(data.slug) }
+        : {}),
+      updatedAt: new Date(),
+    };
+
+    if (data.slug !== undefined && !updateData.slug) {
+      return {
+        ok: false,
+        code: "VALIDATION_ERROR",
+        message: "Informe um slug válido para a campanha",
+      };
+    }
+
     const [updated] = await db
       .update(campaign)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(campaign.id, id))
       .returning();
 
@@ -329,8 +584,16 @@ export async function getCampaign(
     }
 
     const leaders = await db
-      .select()
+      .select({
+        id: campaign_leader.id,
+        leaderId: campaign_leader.leaderId,
+        leaderName: user.name,
+        leaderEmail: user.email,
+        publicCode: campaign_leader.publicCode,
+        active: campaign_leader.active,
+      })
       .from(campaign_leader)
+      .innerJoin(user, eq(user.id, campaign_leader.leaderId))
       .where(eq(campaign_leader.campaignId, id));
 
     return {
@@ -341,6 +604,8 @@ export async function getCampaign(
         leaders: leaders.map((l) => ({
           id: l.id,
           leaderId: l.leaderId,
+          leaderName: l.leaderName,
+          leaderEmail: l.leaderEmail,
           publicCode: l.publicCode,
           active: l.active,
         })),

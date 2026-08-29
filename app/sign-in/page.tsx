@@ -18,7 +18,7 @@ import Link from "next/link";
 
 export default function SignIn() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,22 +29,19 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      // Check if input is email or username
-      const isEmail = email.includes("@");
-      const loginEmail = isEmail ? email : `${email}@prefeito.local`;
-      
-      const result = await signIn.email({
-        email: loginEmail,
-        password,
-        callbackURL: "/dashboard",
-      });
+      const isEmail = login.includes("@");
+      const result = isEmail
+        ? await signIn.email({ email: login, password, callbackURL: "/dashboard" })
+        : await signIn.username({ username: login, password, callbackURL: "/dashboard" });
 
       if (result?.error) {
         setError("Credenciais inválidas. Verifique seu usuário e senha.");
       } else {
-        // Check if this is a leader with pending invitation
-        // If password is the default, redirect to change password
-        if (password === "12345678") {
+        const requiresPasswordChange = (
+          result.data?.user as { mustChangePassword?: boolean } | undefined
+        )?.mustChangePassword;
+
+        if (requiresPasswordChange) {
           router.push("/alterar-senha");
         } else {
           router.push("/dashboard");
@@ -59,7 +56,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-4">
+    <main className="flex flex-col justify-center items-center w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <CardTitle className="text-lg md:text-xl">
@@ -78,13 +75,14 @@ export default function SignIn() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail ou Usuário</Label>
+              <Label htmlFor="login">E-mail ou Usuário</Label>
               <Input
-                id="email"
+                id="login"
+                name="login"
                 type="text"
                 placeholder="seu@email.com ou nome_usuario"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
                 required
                 autoComplete="username"
               />
@@ -94,6 +92,7 @@ export default function SignIn() {
               <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -103,12 +102,21 @@ export default function SignIn() {
               />
             </div>
 
+            <div className="text-right text-sm">
+              <Link
+                href="/esqueci-senha"
+                className="text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

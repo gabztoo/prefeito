@@ -4,7 +4,6 @@ import { Pool } from "pg";
 import { sql } from "drizzle-orm";
 import { 
   inviteLeader, 
-  resendLeaderInvite, 
   acceptInvite, 
   completePasswordReset,
   getLockId,
@@ -14,12 +13,21 @@ import {
 describe("Invitation Integration", () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
+  let adminId: string;
 
   beforeAll(async () => {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL!,
     });
     db = drizzle(pool);
+
+    const adminResult = await db.execute(
+      sql`SELECT id FROM "user" WHERE role = 'admin' LIMIT 1`
+    );
+    adminId = String(adminResult.rows[0]?.id || "");
+    if (!adminId) {
+      throw new Error("Integration tests require an admin user");
+    }
   });
 
   afterAll(async () => {
@@ -28,36 +36,40 @@ describe("Invitation Integration", () => {
 
   beforeEach(async () => {
     // Clean up test data
-    await db.execute(sql`DELETE FROM invitation WHERE email LIKE '%@test.com'`);
-    await db.execute(sql`DELETE FROM user WHERE email LIKE '%@test.com'`);
+    await db.execute(
+      sql`DELETE FROM invitation WHERE email = 'test_leader@prefeito.local'`
+    );
+    await db.execute(
+      sql`DELETE FROM "user" WHERE email = 'test_leader@prefeito.local'`
+    );
   });
 
   describe("inviteLeader", () => {
     it("should create a leader invitation", async () => {
       const result = await inviteLeader({
-        name: "Test Leader",
-        email: "test-leader@test.com",
-        adminId: "admin-123",
+        firstName: "Test",
+        lastName: "Leader",
+        adminId,
       });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.email).toBe("test-leader@test.com");
+        expect(result.data.email).toBe("test_leader@prefeito.local");
         expect(result.data.status).toBe(InvitationStatus.PENDING);
       }
     });
 
     it("should be idempotent for same email", async () => {
       const result1 = await inviteLeader({
-        name: "Test Leader",
-        email: "test-leader@test.com",
-        adminId: "admin-123",
+        firstName: "Test",
+        lastName: "Leader",
+        adminId,
       });
 
       const result2 = await inviteLeader({
-        name: "Test Leader",
-        email: "test-leader@test.com",
-        adminId: "admin-123",
+        firstName: "Test",
+        lastName: "Leader",
+        adminId,
       });
 
       expect(result1.ok).toBe(true);

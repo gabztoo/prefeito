@@ -1,23 +1,31 @@
 import { db } from "@/db/drizzle";
 import { user, invitation, verification, account } from "@/db/schema";
-import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { eq, and, gt, inArray, sql } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
-import { sendInviteEmail, sendResetPasswordEmail } from "@/lib/services/email";
 import crypto from "crypto";
 
-// Helper function to generate a reset password token
-async function generateResetPasswordToken(userId: string): Promise<string> {
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
-  
-  await db.insert(verification).values({
-    id: token,
-    identifier: `reset-password:${userId}`,
-    value: userId,
-    expiresAt,
-  });
-  
-  return token;
+export const LEADER_DEFAULT_PASSWORD = "12345678";
+
+export function getLeaderUsername(firstName: string, lastName: string): string {
+  const normalizeName = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  return `${normalizeName(firstName)}_${normalizeName(lastName)}`;
+}
+
+export function getLeaderProvisioningState() {
+  return {
+    banned: false,
+    banReason: null,
+    mustChangePassword: true,
+  } as const;
 }
 
 export enum InvitationStatus {
@@ -43,12 +51,6 @@ export interface Invitation {
 export interface InviteLeaderInput {
   firstName: string;
   lastName: string;
-  email: string;
-  adminId: string;
-}
-
-export interface ResendLeaderInviteInput {
-  invitationId: string;
   adminId: string;
 }
 
@@ -62,12 +64,30 @@ export interface CompletePasswordResetInput {
   newPassword: string;
 }
 
-export function getLockId(userId: string): number {
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MAX_LENGTH = 128;
+
+export function getPasswordValidationError(password: unknown): string | null {
+  if (
+    typeof password !== "string" ||
+    password.length < PASSWORD_MIN_LENGTH ||
+    password.length > PASSWORD_MAX_LENGTH
+  ) {
+    return "A senha deve ter entre 12 e 128 caracteres.";
+  }
+
+  return null;
+}
+
+export function getLockId(userId: string): bigint {
   const hash = crypto.createHash("sha256").update(userId).digest();
   const first8Bytes = hash.subarray(0, 8);
-  const bigintValue = first8Bytes.readBigUInt64BE();
-  // Convert to signed 64-bit integer
-  return Number(bigintValue);
+  const unsignedValue = first8Bytes.readBigUInt64BE();
+  const signBit = BigInt(1) << BigInt(63);
+
+  return unsignedValue >= signBit
+    ? unsignedValue - (BigInt(1) << BigInt(64))
+    : unsignedValue;
 }
 
 export async function inviteLeader(
@@ -75,13 +95,13 @@ export async function inviteLeader(
 ): Promise<ActionResult<Invitation>> {
   try {
     // Generate login from first and last name
-    const login = `${input.firstName}_${input.lastName}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_]/g, "");
+    const login = getLeaderUsername(input.firstName, input.lastName);
     
     // Email for login (login@prefeito.local)
     const loginEmail = `${login}@prefeito.local`;
     
     // Default password
-    const defaultPassword = "12345678";
+    const defaultPassword = LEADER_DEFAULT_PASSWORD;
 
     // Check if login email already has a pending invitation
     const [existingInvitation] = await db
@@ -103,22 +123,30 @@ export async function inviteLeader(
       };
     }
 
-    // Check if user already exists with this login email
+    // Check if user already exists with this username.
     const [existingUser] = await db
       .select()
       .from(user)
-      .where(eq(user.email, loginEmail))
+      .where(eq(user.username, login))
       .limit(1);
 
     if (existingUser) {
-      // Check if user is banned with pending-invite reason
-      if (existingUser.banned && existingUser.banReason === "pending-invite") {
+      // Re-enable legacy pending accounts without requiring email delivery.
+      if (existingUser.banReason === "pending-invite") {
+        await db
+          .update(user)
+          .set({
+            ...getLeaderProvisioningState(),
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, existingUser.id));
+
         // Resume invitation for existing user
         const [newInvitation] = await db
           .insert(invitation)
           .values({
             userId: existingUser.id,
-            email: input.email,
+            email: loginEmail,
             status: InvitationStatus.PENDING,
             deliveryVersion: 1,
             invitedBy: input.adminId,
@@ -140,15 +168,16 @@ export async function inviteLeader(
       }
     }
 
-    // Create new user with default password and banned status
+    // Create a usable account that is forced through password setup after login.
     const userId = crypto.randomUUID();
     await db.insert(user).values({
       id: userId,
       email: loginEmail,
+      username: login,
       name: `${input.firstName} ${input.lastName}`,
       role: "leader",
-      banned: true,
-      banReason: "pending-invite",
+      emailVerified: true,
+      ...getLeaderProvisioningState(),
     });
 
     // Hash password with scrypt (Better Auth format)
@@ -188,7 +217,7 @@ export async function inviteLeader(
       ok: true,
       data: newInvitation as Invitation,
     };
-  } catch (error) {
+  } catch {
     return {
       ok: false,
       code: "INTERNAL_ERROR",
@@ -197,211 +226,56 @@ export async function inviteLeader(
   }
 }
 
-export async function resendLeaderInvite(
-  input: ResendLeaderInviteInput
-): Promise<ActionResult<Invitation>> {
-  try {
-    // Get the invitation
-    const [existingInvitation] = await db
-      .select()
-      .from(invitation)
-      .where(eq(invitation.id, input.invitationId))
-      .limit(1);
-
-    if (!existingInvitation) {
-      return {
-        ok: false,
-        code: "NOT_FOUND",
-        message: "Convite não encontrado",
-      };
-    }
-
-    if (existingInvitation.status !== InvitationStatus.PENDING) {
-      return {
-        ok: false,
-        code: "FORBIDDEN",
-        message: "Convite não está pendente",
-      };
-    }
-
-    // Acquire advisory lock
-    const lockId = getLockId(existingInvitation.userId);
-    await db.execute(sql`SELECT pg_advisory_lock(${lockId})`);
-
-    try {
-      // Remove old verification records
-      await db
-        .delete(verification)
-        .where(
-          and(
-            eq(verification.identifier, `reset-password:${existingInvitation.userId}`),
-            eq(verification.value, existingInvitation.userId)
-          )
-        );
-
-      // Increment delivery version
-      const newVersion = existingInvitation.deliveryVersion + 1;
-
-      // Update invitation
-      const [updatedInvitation] = await db
-        .update(invitation)
-        .set({
-          deliveryVersion: newVersion,
-          updatedAt: new Date(),
-        })
-        .where(eq(invitation.id, input.invitationId))
-        .returning();
-
-      // Generate new reset password token
-      const token = await generateResetPasswordToken(existingInvitation.userId);
-
-      // Send invite email with new version
-      await sendInviteEmail({
-        to: existingInvitation.email,
-        name: "Leader", // We should get the name from user table
-        token,
-        version: newVersion,
-      });
-
-      return {
-        ok: true,
-        data: updatedInvitation as Invitation,
-      };
-    } finally {
-      // Release advisory lock
-      await db.execute(sql`SELECT pg_advisory_unlock(${lockId})`);
-    }
-  } catch (error) {
-    return {
-      ok: false,
-      code: "INTERNAL_ERROR",
-      message: "Erro ao reenviar convite",
-    };
-  }
-}
-
 export async function acceptInvite(
   input: AcceptInviteInput
 ): Promise<ActionResult<void>> {
-  try {
-    // Find the verification record by token
-    const [verificationRecord] = await db
-      .select()
-      .from(verification)
-      .where(eq(verification.id, input.token))
-      .limit(1);
-
-    if (!verificationRecord) {
-      return {
-        ok: false,
-        code: "NOT_FOUND",
-        message: "Token inválido ou expirado",
-      };
-    }
-
-    // Check if token is expired
-    if (new Date() > verificationRecord.expiresAt) {
-      return {
-        ok: false,
-        code: "VALIDATION_ERROR",
-        message: "Token expirado",
-      };
-    }
-
-    // The identifier should be 'reset-password:' and value should be userId
-    if (!verificationRecord.identifier.startsWith("reset-password:")) {
-      return {
-        ok: false,
-        code: "VALIDATION_ERROR",
-        message: "Token inválido",
-      };
-    }
-
-    const userId = verificationRecord.value;
-
-    // Acquire advisory lock
-    const lockId = getLockId(userId);
-    await db.execute(sql`SELECT pg_advisory_lock(${lockId})`);
-
-    try {
-      // Check if invitation is still pending
-      const [invitationRecord] = await db
-        .select()
-        .from(invitation)
-        .where(
-          and(
-            eq(invitation.userId, userId),
-            eq(invitation.status, InvitationStatus.PENDING)
-          )
-        )
-        .limit(1);
-
-      if (!invitationRecord) {
-        return {
-          ok: false,
-          code: "FORBIDDEN",
-          message: "Convite não encontrado ou já utilizado",
-        };
-      }
-
-      // Update user password directly
-      await db
-        .update(user)
-        .set({
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, invitationRecord.userId));
-
-      // Mark invitation as accepted
-      await db
-        .update(invitation)
-        .set({
-          status: InvitationStatus.ACCEPTED,
-          acceptedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(invitation.id, invitationRecord.id));
-
-      // Verify email and unban user
-      await db
-        .update(user)
-        .set({
-          emailVerified: true,
-          banned: false,
-          banReason: null,
-          banExpires: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, userId));
-
-      // Remove verification record
-      await db
-        .delete(verification)
-        .where(eq(verification.id, verificationRecord.id));
-
-      return { ok: true, data: undefined };
-    } finally {
-      // Release advisory lock
-      await db.execute(sql`SELECT pg_advisory_unlock(${lockId})`);
-    }
-  } catch (error) {
-    return {
-      ok: false,
-      code: "INTERNAL_ERROR",
-      message: "Erro ao aceitar convite",
-    };
-  }
+  return completePasswordReset({
+    token: input.token,
+    newPassword: input.password,
+  });
 }
 
 export async function completePasswordReset(
   input: CompletePasswordResetInput
 ): Promise<ActionResult<void>> {
+  if (!input || typeof input !== "object") {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: "Os dados para redefinir a senha são inválidos.",
+    };
+  }
+
+  const resetInput = input as Partial<CompletePasswordResetInput>;
+  const passwordError = getPasswordValidationError(resetInput.newPassword);
+  if (passwordError) {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: passwordError,
+    };
+  }
+
+  if (typeof resetInput.token !== "string" || resetInput.token.length === 0) {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: "Token inválido ou expirado",
+    };
+  }
+
+  const identifier = `reset-password:${resetInput.token}`;
+
   try {
-    // Find the verification record by token
     const [verificationRecord] = await db
       .select()
       .from(verification)
-      .where(eq(verification.id, input.token))
+      .where(
+        and(
+          eq(verification.identifier, identifier),
+          gt(verification.expiresAt, new Date())
+        )
+      )
       .limit(1);
 
     if (!verificationRecord) {
@@ -412,75 +286,55 @@ export async function completePasswordReset(
       };
     }
 
-    // Check if token is expired
-    if (new Date() > verificationRecord.expiresAt) {
-      return {
-        ok: false,
-        code: "VALIDATION_ERROR",
-        message: "Token expirado",
-      };
-    }
-
-    // The identifier should be 'reset-password:' and value should be userId
-    if (!verificationRecord.identifier.startsWith("reset-password:")) {
-      return {
-        ok: false,
-        code: "VALIDATION_ERROR",
-        message: "Token inválido",
-      };
-    }
-
     const userId = verificationRecord.value;
 
-    // Acquire advisory lock
     const lockId = getLockId(userId);
-    await db.execute(sql`SELECT pg_advisory_lock(${lockId})`);
+    return await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockId})`);
 
-    try {
-      // Check if user is banned with pending-invite reason
-      const [userRecord] = await db
+      const [currentVerification] = await tx
+        .select()
+        .from(verification)
+        .where(
+          and(
+            eq(verification.identifier, identifier),
+            gt(verification.expiresAt, new Date())
+          )
+        )
+        .limit(1);
+
+      if (!currentVerification) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Token inválido ou expirado",
+        };
+      }
+
+      const [userRecord] = await tx
         .select()
         .from(user)
-        .where(eq(user.id, userId))
+        .where(eq(user.id, currentVerification.value))
         .limit(1);
 
       if (!userRecord) {
         return {
           ok: false,
           code: "NOT_FOUND",
-          message: "Usuário não encontrado",
+          message: "Token inválido ou expirado",
         };
       }
 
-      // If user is banned with pending-invite, this is an invite flow
-      if (userRecord.banned && userRecord.banReason === "pending-invite") {
-        // This should be handled by acceptInvite, not completePasswordReset
-        return {
-          ok: false,
-          code: "FORBIDDEN",
-          message: "Use o fluxo de convite para definir senha",
-        };
-      }
-
-      // Update user record
-      await db
-        .update(user)
-        .set({
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, userId));
-
-      // Remove verification record
-      await db
-        .delete(verification)
-        .where(eq(verification.id, verificationRecord.id));
+      await auth.api.resetPassword({
+        body: {
+          token: resetInput.token,
+          newPassword: resetInput.newPassword as string,
+        },
+      });
 
       return { ok: true, data: undefined };
-    } finally {
-      // Release advisory lock
-      await db.execute(sql`SELECT pg_advisory_unlock(${lockId})`);
-    }
-  } catch (error) {
+    });
+  } catch {
     return {
       ok: false,
       code: "INTERNAL_ERROR",
@@ -499,6 +353,19 @@ export interface Leader {
   createdAt: Date;
   updatedAt: Date;
   invitationStatus: string | null;
+}
+
+export function getLeaderInvitationEmails(
+  leaders: Array<Pick<Leader, "email">>
+): string[] {
+  return leaders.map((leader) => leader.email);
+}
+
+export function getLeaderInvitationStatus(
+  email: string,
+  invitations: Array<{ email: string; status: string }>
+): string | null {
+  return invitations.find((item) => item.email === email)?.status ?? null;
 }
 
 export async function listLeaders(): Promise<
@@ -524,26 +391,21 @@ export async function listLeaders(): Promise<
       .where(eq(user.role, "leader"));
 
     // Get invitations for each leader
-    const leaderEmails = leaders.map((l) => l.email);
+    const leaderEmails = getLeaderInvitationEmails(leaders);
     const invitations = leaderEmails.length > 0
       ? await db
           .select()
           .from(invitation)
-          .where(
-            and(
-              eq(invitation.email, leaderEmails[0] || ""),
-              eq(invitation.status, InvitationStatus.PENDING)
-            )
-          )
+          .where(inArray(invitation.email, leaderEmails))
       : [];
 
     // Map invitations to leaders
     const leadersWithInvitations = leaders.map((leader) => {
-      const invitation = invitations.find((i) => i.email === leader.email);
-      return {
-        ...leader,
-        invitationStatus: invitation?.status || null,
-      };
+        const invitationStatus = getLeaderInvitationStatus(leader.email, invitations);
+        return {
+          ...leader,
+          invitationStatus,
+        };
     });
 
     return {
@@ -553,7 +415,7 @@ export async function listLeaders(): Promise<
         total: leadersWithInvitations.length,
       },
     };
-  } catch (error) {
+  } catch {
     return {
       ok: false,
       code: "INTERNAL_ERROR",

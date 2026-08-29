@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { changeInitialPassword } from "./actions";
 import {
   Card,
   CardContent,
@@ -40,13 +40,10 @@ export default function AlterarSenhaPage() {
     setIsLoading(true);
 
     try {
-      const result = await authClient.changePassword({
-        newPassword,
-        currentPassword: "12345678",
-      });
+      const result = await changeInitialPassword(newPassword);
 
-      if (result?.error) {
-        setError("Erro ao alterar senha. Tente novamente.");
+      if (!result.ok) {
+        setError(result.message);
       } else {
         setSuccess(true);
         setTimeout(() => {

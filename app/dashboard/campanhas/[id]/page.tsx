@@ -1,12 +1,21 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCampaignAction, transitionCampaignAction } from "../actions";
-import { CampaignStatus } from "@/lib/services/campaign";
+import {
+  getCampaignAction,
+  transitionCampaignAction,
+} from "../actions";
+import { listLeaders } from "@/lib/services/invitation";
+import {
+  buildPublicLinkUrl,
+  CampaignStatus,
+} from "@/lib/services/campaign";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { AssignLeaderForm } from "../assign-leader-form";
+import { LeaderCampaignLinks } from "../leader-campaign-links";
 
 export default async function CampanhaDetailPage({
   params,
@@ -46,6 +55,24 @@ export default async function CampanhaDetailPage({
   }
 
   const campaign = campaignResult.data;
+  const leadersResult = await listLeaders();
+  const leaders = leadersResult.ok ? leadersResult.data.leaders : [];
+  const availableLeaders = leaders.filter(
+    (leader) => !campaign.leaders.some((link) => link.leaderId === leader.id)
+  );
+  const canAssignLeader = campaign.status !== CampaignStatus.CLOSED && availableLeaders.length > 0;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  const linkedLeaderLinks = campaign.leaders.map((leader) => ({
+    campaignLeaderId: leader.id,
+    leaderName: leader.leaderName,
+    leaderEmail: leader.leaderEmail,
+    campaignName: campaign.name,
+    campaignSlug: campaign.slug,
+    campaignStatus: campaign.status,
+    publicCode: leader.publicCode,
+    active: leader.active,
+    url: buildPublicLinkUrl(appUrl, campaign.slug, leader.publicCode),
+  }));
 
   const getStatusBadge = (status: CampaignStatus) => {
     switch (status) {
@@ -82,6 +109,27 @@ export default async function CampanhaDetailPage({
         </div>
 
         <div className="mt-6 grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Adicionar líder</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AssignLeaderForm
+                campaignId={id}
+                campaignSlug={campaign.slug}
+                leaders={availableLeaders.map((leader) => ({
+                  id: leader.id,
+                  name: leader.name,
+                  email: leader.email,
+                }))}
+                disabled={!canAssignLeader}
+              />
+              <p className="mt-3 text-xs text-muted-foreground">
+                O link exclusivo será criado automaticamente para a campanha e o líder selecionados.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Detalhes</CardTitle>
@@ -156,32 +204,7 @@ export default async function CampanhaDetailPage({
               <CardTitle>Líderes Vinculados</CardTitle>
             </CardHeader>
             <CardContent>
-              {campaign.leaders.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum líder vinculado a esta campanha.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {campaign.leaders.map((leader) => (
-                    <div
-                      key={leader.id}
-                      className="flex justify-between items-center p-2 border rounded"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">
-                          Líder: {leader.leaderId}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Código: {leader.publicCode}
-                        </p>
-                      </div>
-                      <Badge variant={leader.active ? "default" : "secondary"}>
-                        {leader.active ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <LeaderCampaignLinks links={linkedLeaderLinks} />
             </CardContent>
           </Card>
         </div>

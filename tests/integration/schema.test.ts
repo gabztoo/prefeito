@@ -27,77 +27,77 @@ describe("Database Schema", () => {
 
   it("should have user table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'user'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'user'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have session table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'session'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'session'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have account table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'account'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'account'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have verification table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'verification'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'verification'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have campaign table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'campaign'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'campaign'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have campaign_leader table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'campaign_leader'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'campaign_leader'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have voter table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'voter'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'voter'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have invitation table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'invitation'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'invitation'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have registration_rate_limit table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'registration_rate_limit'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'registration_rate_limit'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have audit_event table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'audit_event'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'audit_event'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have rateLimit table", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'rateLimit'`
+      sql`SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'rateLimit'`
     );
     expect(result.rows.length).toBe(1);
   });
@@ -139,49 +139,49 @@ describe("Database Schema", () => {
 
   it("should have foreign key from campaign.createdBy to user.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_createdBy_foreign' AND table_name = 'campaign'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_createdBy_user_id_fk' AND table_name = 'campaign'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from campaign_leader.campaignId to campaign.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_leader_campaignId_foreign' AND table_name = 'campaign_leader'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_leader_campaignId_campaign_id_fk' AND table_name = 'campaign_leader'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from campaign_leader.leaderId to user.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_leader_leaderId_foreign' AND table_name = 'campaign_leader'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'campaign_leader_leaderId_user_id_fk' AND table_name = 'campaign_leader'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from voter.campaignLeaderId, voter.campaignId to campaign_leader.id, campaign_leader.campaignId", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'voter_campaignLeaderId_campaignId_foreign' AND table_name = 'voter'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'voter_campaignLeaderId_campaignId_campaign_leader_id_campaignId_fk' AND table_name = 'voter'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from invitation.userId to user.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'invitation_userId_foreign' AND table_name = 'invitation'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'invitation_userId_user_id_fk' AND table_name = 'invitation'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from invitation.invitedBy to user.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'invitation_invitedBy_foreign' AND table_name = 'invitation'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'invitation_invitedBy_user_id_fk' AND table_name = 'invitation'`
     );
     expect(result.rows.length).toBe(1);
   });
 
   it("should have foreign key from audit_event.actorId to user.id", async () => {
     const result = await db.execute(
-      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'audit_event_actorId_foreign' AND table_name = 'audit_event'`
+      sql`SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'audit_event_actorId_user_id_fk' AND table_name = 'audit_event'`
     );
     expect(result.rows.length).toBe(1);
   });

@@ -4,44 +4,44 @@ import { CampaignStatus, canTransition, validateTransition } from "@/lib/service
 describe("Campaign State Machine", () => {
   describe("canTransition", () => {
     it("should allow draft -> open", () => {
-      expect(canTransition("draft", "open")).toBe(true);
+      expect(canTransition(CampaignStatus.DRAFT, CampaignStatus.OPEN)).toBe(true);
     });
 
     it("should allow open -> closed", () => {
-      expect(canTransition("open", "closed")).toBe(true);
+      expect(canTransition(CampaignStatus.OPEN, CampaignStatus.CLOSED)).toBe(true);
     });
 
     it("should not allow draft -> closed", () => {
-      expect(canTransition("draft", "closed")).toBe(false);
+      expect(canTransition(CampaignStatus.DRAFT, CampaignStatus.CLOSED)).toBe(false);
     });
 
     it("should not allow open -> draft", () => {
-      expect(canTransition("open", "draft")).toBe(false);
+      expect(canTransition(CampaignStatus.OPEN, CampaignStatus.DRAFT)).toBe(false);
     });
 
     it("should not allow closed -> open", () => {
-      expect(canTransition("closed", "open")).toBe(false);
+      expect(canTransition(CampaignStatus.CLOSED, CampaignStatus.OPEN)).toBe(false);
     });
 
     it("should not allow closed -> draft", () => {
-      expect(canTransition("closed", "draft")).toBe(false);
+      expect(canTransition(CampaignStatus.CLOSED, CampaignStatus.DRAFT)).toBe(false);
     });
 
     it("should not allow same state transition", () => {
-      expect(canTransition("draft", "draft")).toBe(false);
-      expect(canTransition("open", "open")).toBe(false);
-      expect(canTransition("closed", "closed")).toBe(false);
+      expect(canTransition(CampaignStatus.DRAFT, CampaignStatus.DRAFT)).toBe(false);
+      expect(canTransition(CampaignStatus.OPEN, CampaignStatus.OPEN)).toBe(false);
+      expect(canTransition(CampaignStatus.CLOSED, CampaignStatus.CLOSED)).toBe(false);
     });
   });
 
   describe("validateTransition", () => {
     it("should return success for valid transition", () => {
-      const result = validateTransition("draft", "open");
+      const result = validateTransition(CampaignStatus.DRAFT, CampaignStatus.OPEN);
       expect(result.ok).toBe(true);
     });
 
     it("should return error for invalid transition", () => {
-      const result = validateTransition("draft", "closed");
+      const result = validateTransition(CampaignStatus.DRAFT, CampaignStatus.CLOSED);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.code).toBe("INVALID_TRANSITION");
@@ -49,7 +49,7 @@ describe("Campaign State Machine", () => {
     });
 
     it("should return error for closed -> open", () => {
-      const result = validateTransition("closed", "open");
+      const result = validateTransition(CampaignStatus.CLOSED, CampaignStatus.OPEN);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.code).toBe("INVALID_TRANSITION");

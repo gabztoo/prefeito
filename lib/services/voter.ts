@@ -17,7 +17,6 @@ type ActionResult<T> =
         | "LINK_INACTIVE"
         | "DUPLICATE_PHONE"
         | "RATE_LIMITED"
-        | "EMAIL_DELIVERY_FAILED"
         | "INTERNAL_ERROR";
       message: string;
       fieldErrors?: Record<string, string[]>;
@@ -81,15 +80,17 @@ export async function registerVoter(
     const campaignLeader = await tx
       .execute(
         sql`
-          SELECT c.id as campaign_id, c.slug as campaign_slug, c.status as campaign_status,
-                 cl.id as leader_id, cl.active as leader_active
-          FROM campaign c
-          INNER JOIN campaign_leader cl ON c.id = cl.campaign_id
-          WHERE c.slug = ${campaignSlug}
-            AND cl.public_code = ${publicCode}
-            AND cl.active = true
-            AND c.status = 'open'
-          FOR UPDATE OF c, cl
+           SELECT c."id" as campaign_id, c."slug" as campaign_slug, c."status" as campaign_status,
+                  cl."id" as leader_id, cl."active" as leader_active
+           FROM "campaign" c
+           INNER JOIN "campaign_leader" cl ON c."id" = cl."campaignId"
+           INNER JOIN "user" u ON u."id" = cl."leaderId"
+           WHERE c."slug" = ${campaignSlug}
+             AND cl."publicCode" = ${publicCode}
+             AND cl."active" = true
+             AND c."status" = 'open'
+             AND u."banned" = false
+           FOR SHARE OF c, cl, u
           LIMIT 1
         `
       )

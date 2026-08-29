@@ -1,78 +1,101 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import {
+  Sheet,
+  SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import UserProfile from "@/components/user-profile";
 import {
-  Brush,
   HomeIcon,
-  LucideGitBranchPlus,
-  MonitorSmartphone,
+  Settings,
+  UserCheck,
+  Users,
+  Vote,
+  Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
+import clsx from "clsx";
+import { usePathname } from "next/navigation";
 
-export default function DashboardTopNav({ children }: { children: ReactNode }) {
+interface DashboardTopNavProps {
+  children: ReactNode;
+  userRole?: string;
+}
+
+const navItems = [
+  { label: "Visão Geral", href: "/dashboard", icon: HomeIcon },
+  { label: "Campanhas", href: "/dashboard/campanhas", icon: Vote },
+  { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true },
+  { label: "Eleitores", href: "/dashboard/eleitores", icon: Users },
+  { label: "Configurações", href: "/dashboard/settings", icon: Settings },
+];
+
+export default function DashboardTopNav({
+  children,
+  userRole,
+}: DashboardTopNavProps) {
+  const pathname = usePathname();
+  const isAdmin = userRole === "admin";
+  const filteredNavItems = navItems.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
+
   return (
-    <div className="flex flex-col">
-      <header className="flex h-14 lg:h-[52px] items-center gap-4 border-b px-3">
-        <Dialog>
-          <SheetTrigger className="min-[1024px]:hidden p-2 transition">
-            <Link prefetch={true} href="/dashboard">
-              <span className="sr-only">Home</span>
-            </Link>
+    <div className="flex min-h-full flex-col">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-3 backdrop-blur lg:h-[52px] lg:px-5">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="min-[1024px]:hidden"
+              aria-label="Abrir menu de navegação"
+            >
+              <Menu aria-hidden="true" />
+            </Button>
           </SheetTrigger>
-          <SheetContent side="left">
-            <SheetHeader>
-              <Link prefetch={true} href="/">
-                <SheetTitle>Pass Builder</SheetTitle>
-              </Link>
+          <SheetContent side="left" className="w-[min(20rem,85vw)]">
+            <SheetHeader className="text-left">
+              <SheetTitle>Sistema Eleitoral</SheetTitle>
+              <SheetDescription>
+                Navegue pelo painel administrativo.
+              </SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col space-y-3 mt-[1rem]">
-              <DialogClose asChild>
-                <Link prefetch={true} href="/dashboard">
-                  <Button variant="outline" className="w-full">
-                    <HomeIcon className="mr-2 h-4 w-4" />
-                    Overview
-                  </Button>
-                </Link>
-              </DialogClose>
-              <DialogClose asChild>
-                <Link prefetch={true} href="/dashboard/create">
-                  <Button variant="outline" className="w-full">
-                    <Brush className="mr-2 h-4 w-4" />
-                    Create Pass
-                  </Button>
-                </Link>
-              </DialogClose>
-              <DialogClose asChild>
-                <Link prefetch={true} href="/dashboard/notifications">
-                  <Button variant="outline" className="w-full">
-                    <MonitorSmartphone className="mr-2 h-4 w-4" />
-                    Notifications
-                  </Button>
-                </Link>
-              </DialogClose>
-              <Separator className="my-3" />
-              <DialogClose asChild>
-                <Link prefetch={true} href="/dashboard/analytics">
-                  <Button variant="outline" className="w-full">
-                    <LucideGitBranchPlus className="mr-2 h-4 w-4" />
-                    Analytics
-                  </Button>
-                </Link>
-              </DialogClose>
-            </div>
+            <nav className="mt-4 flex flex-col gap-1" aria-label="Menu principal">
+              {filteredNavItems.map(({ label, href, icon: Icon }) => (
+                <SheetClose key={href} asChild>
+                  <Link
+                    href={href}
+                    aria-current={pathname === href ? "page" : undefined}
+                    className={clsx(
+                      "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-[background-color,color]",
+                      pathname === href
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {label}
+                  </Link>
+                </SheetClose>
+              ))}
+            </nav>
           </SheetContent>
-        </Dialog>
-        <div className="flex justify-center items-center gap-2 ml-auto">
+        </Sheet>
+        <Link
+          href="/dashboard"
+          className="text-sm font-semibold min-[1024px]:hidden"
+        >
+          Sistema Eleitoral
+        </Link>
+        <div className="ml-auto">
           <UserProfile mini={true} />
         </div>
       </header>
