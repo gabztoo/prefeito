@@ -6,6 +6,7 @@ describe("Auth Authorization", () => {
     "/api/auth/sign-up/email",
     "/api/auth/reset-password",
     "/api/auth/reset-password/confirm",
+    "/api/auth/change-password",
     "/api/auth/admin/users",
     "/api/auth/admin/session",
   ])("blocks disabled endpoint %s", (pathname) => {

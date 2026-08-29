@@ -12,6 +12,7 @@ import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
 import { z } from "zod";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
 
 export const LEADER_DEFAULT_PASSWORD = "12345678";
 
@@ -89,6 +90,174 @@ export function getPasswordValidationError(password: unknown): string | null {
   }
 
   return null;
+}
+
+export function getInitialPasswordValidationError(
+  password: unknown
+): string | null {
+  if (password === LEADER_DEFAULT_PASSWORD) {
+    return "Escolha uma senha diferente da senha padrão com pelo menos 12 caracteres.";
+  }
+
+  return getPasswordValidationError(password);
+}
+
+export async function completeInitialPasswordChange(
+  userId: string,
+  newPassword: string
+): Promise<ActionResult<void>> {
+  const passwordError = getInitialPasswordValidationError(newPassword);
+  if (passwordError) {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: passwordError,
+    };
+  }
+
+  try {
+    const passwordHash = await hashPassword(newPassword);
+
+    return await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        SELECT c."id"
+        FROM "campaign" c
+        INNER JOIN "campaign_leader" cl ON cl."campaignId" = c."id"
+        WHERE cl."leaderId" = ${userId}
+        ORDER BY c."id"
+        FOR UPDATE OF c
+      `);
+
+      await tx.execute(sql`
+        SELECT cl."id"
+        FROM "campaign_leader" cl
+        WHERE cl."leaderId" = ${userId}
+        ORDER BY cl."campaignId", cl."id"
+        FOR UPDATE OF cl
+      `);
+
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        WHERE u."id" = ${userId}
+        FOR UPDATE OF u
+      `);
+
+      const [leader] = await tx
+        .select({
+          id: user.id,
+          role: user.role,
+          banned: user.banned,
+          mustChangePassword: user.mustChangePassword,
+        })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1);
+
+      if (!leader || leader.role !== "leader") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas líderes precisam alterar a senha inicial.",
+        };
+      }
+
+      if (leader.banned) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Sua conta está desativada.",
+        };
+      }
+
+      if (!leader.mustChangePassword) {
+        return {
+          ok: false,
+          code: "VALIDATION_ERROR",
+          message: "A senha inicial já foi alterada.",
+        };
+      }
+
+      const [credentialAccount] = await tx
+        .select({ id: account.id, password: account.password })
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, userId),
+            eq(account.accountId, userId),
+            eq(account.providerId, "credential"),
+            eq(account.issuer, "local:credential")
+          )
+        )
+        .limit(1);
+
+      if (!credentialAccount?.password) {
+        return {
+          ok: false,
+          code: "INTERNAL_ERROR",
+          message: "Não foi possível localizar a conta de acesso.",
+        };
+      }
+
+      const currentPasswordIsValid = await verifyPassword({
+        hash: credentialAccount.password,
+        password: LEADER_DEFAULT_PASSWORD,
+      });
+
+      if (!currentPasswordIsValid) {
+        return {
+          ok: false,
+          code: "VALIDATION_ERROR",
+          message: "A senha padrão não pôde ser validada. Faça login novamente com a senha padrão.",
+        };
+      }
+
+      const now = new Date();
+      await tx
+        .update(account)
+        .set({ password: passwordHash, updatedAt: now })
+        .where(eq(account.id, credentialAccount.id));
+
+      await tx
+        .update(user)
+        .set({
+          mustChangePassword: false,
+          banned: false,
+          banReason: null,
+          emailVerified: true,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(user.id, userId),
+            eq(user.banned, false),
+            eq(user.mustChangePassword, true)
+          )
+        );
+
+      await tx
+        .update(invitation)
+        .set({
+          status: InvitationStatus.ACCEPTED,
+          acceptedAt: now,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(invitation.userId, userId),
+            eq(invitation.status, InvitationStatus.PENDING)
+          )
+        );
+
+      return { ok: true, data: undefined };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Não foi possível concluir a alteração da senha. Tente novamente.",
+    };
+  }
 }
 
 export function getLockId(userId: string): bigint {
