@@ -5,6 +5,12 @@ import { Check, Copy, ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  regenerateCampaignLeaderLinkAction,
+  revokeCampaignLeaderLinkAction,
+} from "./actions";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 interface LeaderCampaignLink {
   campaignLeaderId: string;
@@ -20,6 +26,7 @@ interface LeaderCampaignLink {
 
 interface LeaderCampaignLinksProps {
   links: LeaderCampaignLink[];
+  isAdmin?: boolean;
 }
 
 const campaignStatusLabels = {
@@ -28,13 +35,50 @@ const campaignStatusLabels = {
   closed: "Encerrada",
 } as const;
 
-export function LeaderCampaignLinks({ links }: LeaderCampaignLinksProps) {
+export function LeaderCampaignLinks({ links, isAdmin = false }: LeaderCampaignLinksProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   async function copyLink(link: LeaderCampaignLink) {
     await navigator.clipboard.writeText(link.url);
     setCopiedId(link.campaignLeaderId);
     window.setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function shareOnWhatsApp(link: LeaderCampaignLink) {
+    const message = `Cadastre-se na campanha ${link.campaignName}: ${link.url}`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  function revokeLink(link: LeaderCampaignLink) {
+    if (!window.confirm("Revogar este link? Cadastros por ele serão bloqueados.")) return;
+
+    startTransition(async () => {
+      const result = await revokeCampaignLeaderLinkAction(link.campaignLeaderId);
+      if (!result.ok) {
+        window.alert(result.message);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function regenerateLink(link: LeaderCampaignLink) {
+    if (!window.confirm("Regenerar este link? O endereço atual deixará de funcionar.")) return;
+
+    startTransition(async () => {
+      const result = await regenerateCampaignLeaderLinkAction(link.campaignLeaderId);
+      if (!result.ok) {
+        window.alert(result.message);
+        return;
+      }
+      router.refresh();
+    });
   }
 
   if (links.length === 0) {
@@ -110,6 +154,36 @@ export function LeaderCampaignLinks({ links }: LeaderCampaignLinksProps) {
                     <ExternalLink aria-hidden="true" /> Abrir cadastro
                   </a>
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => shareOnWhatsApp(link)}
+                  disabled={!isActive}
+                >
+                  Compartilhar no WhatsApp
+                </Button>
+                {isAdmin && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => regenerateLink(link)}
+                      disabled={isPending}
+                    >
+                      Regenerar link
+                    </Button>
+                    {isActive && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => revokeLink(link)}
+                        disabled={isPending}
+                      >
+                        Revogar link
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

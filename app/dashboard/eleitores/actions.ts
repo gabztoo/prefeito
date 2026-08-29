@@ -9,6 +9,7 @@ import {
   deleteVoter,
 } from "@/lib/services/voter";
 import { ActionResult } from "@/lib/types";
+import { logAuditEvent } from "@/lib/services/audit";
 
 export async function listVotersAction(options?: {
   campaignId?: string;
@@ -105,12 +106,24 @@ export async function editVoterAction(
     };
   }
 
-  return editVoter(
+  const editResult = await editVoter(
     voterId,
     data,
     result.session.userId,
     result.user?.role || "leader"
   );
+
+  if (editResult.ok) {
+    await logAuditEvent({
+      action: "update",
+      entity: "voter",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: editResult.data.id,
+    });
+  }
+
+  return editResult;
 }
 
 export async function deleteVoterAction(
@@ -128,9 +141,21 @@ export async function deleteVoterAction(
     };
   }
 
-  return deleteVoter(
+  const deleteResult = await deleteVoter(
     voterId,
     result.session.userId,
     result.user?.role || "leader"
   );
+
+  if (deleteResult.ok) {
+    await logAuditEvent({
+      action: "delete",
+      entity: "voter",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: deleteResult.data.id,
+    });
+  }
+
+  return deleteResult;
 }

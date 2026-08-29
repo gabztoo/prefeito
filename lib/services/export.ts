@@ -24,14 +24,14 @@ export async function exportCsv(
     const pool = db.$client as Pool;
 
     const scopeConditions: string[] = [];
-    const params: (string | undefined)[] = [];
+    const params: (string | string[] | undefined)[] = [];
     let paramIndex = 1;
 
     if (role === "leader") {
       const leaderLinks = await db
-        .select({ id: sql<string>`id` })
+        .select({ id: sql<string>`"id"` })
         .from(sql`campaign_leader`)
-        .where(sql`leader_id = ${userId}`);
+        .where(sql`"leaderId" = ${userId} AND "active" = true`);
 
       if (leaderLinks.length === 0) {
         return {
@@ -46,19 +46,19 @@ export async function exportCsv(
       }
 
       const leaderLinkIds = leaderLinks.map((l) => l.id);
-      scopeConditions.push(`v.campaign_leader_id = ANY($${paramIndex}::uuid[])`);
-      params.push(JSON.stringify(leaderLinkIds));
+      scopeConditions.push(`v."campaignLeaderId" = ANY($${paramIndex}::uuid[])`);
+      params.push(leaderLinkIds);
       paramIndex++;
     }
 
     if (filters.campaignId) {
-      scopeConditions.push(`v.campaign_id = $${paramIndex}`);
+      scopeConditions.push(`v."campaignId" = $${paramIndex}`);
       params.push(filters.campaignId);
       paramIndex++;
     }
 
     if (filters.leaderId) {
-      scopeConditions.push(`v.campaign_leader_id = $${paramIndex}`);
+      scopeConditions.push(`v."campaignLeaderId" = $${paramIndex}`);
       params.push(filters.leaderId);
       paramIndex++;
     }
@@ -96,19 +96,19 @@ export async function exportCsv(
 
     const query = `
       SELECT
-        v.name,
-        v.zone,
-        v.section,
-        v.phone,
-        u.name as leader_name,
-        c.name as campaign_name,
-        v.created_at
+        v."name",
+        v."zone",
+        v."section",
+        v."phone",
+        u."name" as leader_name,
+        c."name" as campaign_name,
+        v."createdAt"
       FROM voter v
-      INNER JOIN campaign_leader cl ON v.campaign_leader_id = cl.id
-      INNER JOIN "user" u ON cl.leader_id = u.id
-      INNER JOIN campaign c ON v.campaign_id = c.id
+      INNER JOIN campaign_leader cl ON v."campaignLeaderId" = cl."id"
+      INNER JOIN "user" u ON cl."leaderId" = u."id"
+      INNER JOIN campaign c ON v."campaignId" = c."id"
       ${whereClause}
-      ORDER BY v.created_at DESC
+      ORDER BY v."createdAt" DESC
     `;
 
     const BOM = "\ufeff";

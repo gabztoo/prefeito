@@ -1,26 +1,20 @@
 import { db } from "@/db/drizzle";
 import { voter, campaign_leader, campaign, user } from "@/db/schema";
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, or, sql, count } from "drizzle-orm";
 import { validateVoterData } from "@/lib/validation";
+import { normalizePhone } from "@/lib/normalization";
 import { isHoneypotFilled, getIpFromHeaders, normalizeIp, getCurrentWindow, incrementRateLimit } from "@/lib/rate-limit";
+import type { ActionResult } from "@/lib/types";
 
-type ActionResult<T> =
-  | { ok: true; data: T }
-  | {
-      ok: false;
-      code:
-        | "VALIDATION_ERROR"
-        | "UNAUTHENTICATED"
-        | "FORBIDDEN"
-        | "NOT_FOUND"
-        | "CAMPAIGN_CLOSED"
-        | "LINK_INACTIVE"
-        | "DUPLICATE_PHONE"
-        | "RATE_LIMITED"
-        | "INTERNAL_ERROR";
-      message: string;
-      fieldErrors?: Record<string, string[]>;
-    };
+export function getVoterSearchTerms(search: string): {
+  name: string;
+  phone: string | null;
+} {
+  const name = search.trim();
+  const phone = normalizePhone(search) || null;
+
+  return { name, phone: phone || null };
+}
 
 /**
  * Register a voter
@@ -76,41 +70,63 @@ export async function registerVoter(
     };
   }
 
-  return db.transaction(async (tx) => {
-    const campaignLeader = await tx
-      .execute(
-        sql`
-           SELECT c."id" as campaign_id, c."slug" as campaign_slug, c."status" as campaign_status,
-                  cl."id" as leader_id, cl."active" as leader_active
-           FROM "campaign" c
-           INNER JOIN "campaign_leader" cl ON c."id" = cl."campaignId"
-           INNER JOIN "user" u ON u."id" = cl."leaderId"
-           WHERE c."slug" = ${campaignSlug}
-             AND cl."publicCode" = ${publicCode}
-             AND cl."active" = true
-             AND c."status" = 'open'
-             AND u."banned" = false
-           FOR SHARE OF c, cl, u
-          LIMIT 1
-        `
-      )
-      .then((result) => (result.rows as Array<{
-        campaign_id: string;
-        campaign_slug: string;
-        campaign_status: string;
-        leader_id: string;
-        leader_active: boolean;
-      }>));
+  try {
+    return await db.transaction(async (tx) => {
+      const campaignLeader = await tx
+        .execute(
+          sql`
+             SELECT c."id" as campaign_id, c."slug" as campaign_slug, c."status" as campaign_status,
+                    cl."id" as leader_id, cl."active" as leader_active,
+                    u."banned" as leader_banned
+             FROM "campaign" c
+             INNER JOIN "campaign_leader" cl ON c."id" = cl."campaignId"
+             INNER JOIN "user" u ON u."id" = cl."leaderId"
+             WHERE c."slug" = ${campaignSlug}
+               AND cl."publicCode" = ${publicCode}
+             LIMIT 1
+             FOR SHARE OF c, cl, u
+           `
+        )
+        .then((result) => (result.rows as Array<{
+          campaign_id: string;
+          campaign_slug: string;
+          campaign_status: string;
+          leader_id: string;
+          leader_active: boolean;
+          leader_banned: boolean;
+        }>));
 
-    if (campaignLeader.length === 0) {
-      return {
-        ok: false,
-        code: "NOT_FOUND",
-        message: "Campanha não encontrada ou link inativo",
-      } as ActionResult<{ id: string }>;
-    }
+      if (campaignLeader.length === 0) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Campanha não encontrada ou link inativo",
+        } as ActionResult<{ id: string }>;
+      }
 
-    const { campaign_id: campaignId, leader_id: leaderId } = campaignLeader[0];
+      const {
+        campaign_id: campaignId,
+        campaign_status: campaignStatus,
+        leader_id: leaderId,
+        leader_active: leaderActive,
+        leader_banned: leaderBanned,
+      } = campaignLeader[0];
+
+      if (campaignStatus !== "open") {
+        return {
+          ok: false,
+          code: "CAMPAIGN_CLOSED",
+          message: "Esta campanha não está aceitando novos cadastros",
+        } as ActionResult<{ id: string }>;
+      }
+
+      if (!leaderActive || leaderBanned) {
+        return {
+          ok: false,
+          code: "LINK_INACTIVE",
+          message: "Este link de cadastro não está ativo",
+        } as ActionResult<{ id: string }>;
+      }
 
     const existingVoter = await tx
       .select()
@@ -123,13 +139,13 @@ export async function registerVoter(
       )
       .limit(1);
 
-    if (existingVoter.length > 0) {
-      return {
-        ok: false,
-        code: "DUPLICATE_PHONE",
-        message: "Telefone já cadastrado nesta campanha",
-      } as ActionResult<{ id: string }>;
-    }
+      if (existingVoter.length > 0) {
+        return {
+          ok: false,
+          code: "DUPLICATE_PHONE",
+          message: "Telefone já cadastrado nesta campanha",
+        } as ActionResult<{ id: string }>;
+      }
 
     const [newVoter] = await tx
       .insert(voter)
@@ -143,11 +159,26 @@ export async function registerVoter(
       })
       .returning({ id: voter.id });
 
+      return {
+        ok: true,
+        data: { id: newVoter.id },
+      };
+    });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return {
+        ok: false,
+        code: "DUPLICATE_PHONE",
+        message: "Telefone já cadastrado nesta campanha",
+      };
+    }
+
     return {
-      ok: true,
-      data: { id: newVoter.id },
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao cadastrar eleitor",
     };
-  });
+  }
 }
 
 /**
@@ -187,25 +218,17 @@ export async function listVoters(
   const offset = (page - 1) * limit;
 
   if (role === "leader") {
-    const leaderRecord = await db
-      .select()
+    const leaderLinkIds = db
+      .select({ id: campaign_leader.id })
       .from(campaign_leader)
-      .where(eq(campaign_leader.leaderId, userId))
-      .limit(1);
+      .where(
+        and(
+          eq(campaign_leader.leaderId, userId),
+          eq(campaign_leader.active, true)
+        )
+      );
 
-    if (leaderRecord.length === 0) {
-      return {
-        ok: true,
-        data: {
-          voters: [],
-          totalFiltered: 0,
-          page,
-          limit,
-        },
-      };
-    }
-
-    const conditions = [eq(voter.campaignLeaderId, leaderRecord[0].id)];
+    const conditions = [inArray(voter.campaignLeaderId, leaderLinkIds)];
 
     if (filters.campaignId) {
       conditions.push(eq(voter.campaignId, filters.campaignId));
@@ -217,8 +240,12 @@ export async function listVoters(
       conditions.push(eq(voter.section, filters.section));
     }
     if (filters.search) {
+      const searchTerms = getVoterSearchTerms(filters.search);
+      const nameCondition = sql`${voter.name} ILIKE ${"%" + searchTerms.name + "%"}`;
       conditions.push(
-        sql`${voter.name} ILIKE ${"%" + filters.search + "%"}`
+        searchTerms.phone
+          ? (or(nameCondition, eq(voter.phone, searchTerms.phone)) ?? nameCondition)
+          : nameCondition
       );
     }
 
@@ -233,7 +260,7 @@ export async function listVoters(
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
-      .orderBy(voter.createdAt);
+      .orderBy(desc(voter.createdAt), asc(voter.id));
 
     return {
       ok: true,
@@ -261,8 +288,12 @@ export async function listVoters(
     conditions.push(eq(voter.section, filters.section));
   }
   if (filters.search) {
+    const searchTerms = getVoterSearchTerms(filters.search);
+    const nameCondition = sql`${voter.name} ILIKE ${"%" + searchTerms.name + "%"}`;
     conditions.push(
-      sql`${voter.name} ILIKE ${"%" + filters.search + "%"}`
+      searchTerms.phone
+        ? (or(nameCondition, eq(voter.phone, searchTerms.phone)) ?? nameCondition)
+        : nameCondition
     );
   }
 
@@ -277,7 +308,7 @@ export async function listVoters(
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .limit(limit)
     .offset(offset)
-    .orderBy(voter.createdAt);
+    .orderBy(desc(voter.createdAt), asc(voter.id));
 
   return {
     ok: true,
@@ -312,54 +343,40 @@ export async function getVoterStats(
   }>
 > {
   if (role === "leader") {
-    const leaderRecord = await db
-      .select()
+    const leaderLinkIds = db
+      .select({ id: campaign_leader.id })
       .from(campaign_leader)
-      .where(eq(campaign_leader.leaderId, userId))
-      .limit(1);
-
-    if (leaderRecord.length === 0) {
-      return {
-        ok: true,
-        data: {
-          byCampaign: [],
-          byLeader: [],
-          grandTotal: 0,
-        },
-      };
-    }
-
-    const leaderId = leaderRecord[0].id;
+      .where(
+        and(
+          eq(campaign_leader.leaderId, userId),
+          eq(campaign_leader.active, true)
+        )
+      );
 
     const [totalResult] = await db
       .select({ total: count() })
       .from(voter)
-      .where(eq(voter.campaignLeaderId, leaderId));
+      .where(inArray(voter.campaignLeaderId, leaderLinkIds));
 
-    const campaignInfo = await db
+    const byCampaignRaw = await db
       .select({
         campaignId: campaign.id,
         campaignName: campaign.name,
+        total: count(voter.id),
       })
       .from(campaign)
-      .innerJoin(
-        campaign_leader,
-        eq(campaign.id, campaign_leader.campaignId)
-      )
-      .where(eq(campaign_leader.id, leaderId))
-      .limit(1);
-
-    const [stats] = await db
-      .select({ total: count() })
-      .from(voter)
-      .where(eq(voter.campaignLeaderId, leaderId));
+      .innerJoin(voter, eq(campaign.id, voter.campaignId))
+      .where(inArray(voter.campaignLeaderId, leaderLinkIds))
+      .groupBy(campaign.id, campaign.name);
 
     return {
       ok: true,
       data: {
-        byCampaign: campaignInfo.length > 0
-          ? [{ campaignId: campaignInfo[0].campaignId, campaignName: campaignInfo[0].campaignName, total: Number(stats.total) }]
-          : [],
+        byCampaign: byCampaignRaw.map((row) => ({
+          campaignId: row.campaignId,
+          campaignName: row.campaignName,
+          total: Number(row.total),
+        })),
         byLeader: [],
         grandTotal: Number(totalResult.total),
       },
@@ -445,6 +462,19 @@ export async function editVoter(
     };
   }
 
+  const validation = validateVoterData({
+    name: data.name ?? existing[0].name,
+    zone: data.zone ?? existing[0].zone,
+    section: data.section ?? existing[0].section,
+    phone: data.phone ?? existing[0].phone,
+  });
+
+  if (!validation.ok) {
+    return validation;
+  }
+
+  const normalizedData = validation.data;
+
   const updateData: Partial<{
     name: string;
     zone: string;
@@ -452,18 +482,18 @@ export async function editVoter(
     phone: string;
   }> = {};
 
-  if (data.name !== undefined) updateData.name = data.name;
-  if (data.zone !== undefined) updateData.zone = data.zone;
-  if (data.section !== undefined) updateData.section = data.section;
+  if (data.name !== undefined) updateData.name = normalizedData.name;
+  if (data.zone !== undefined) updateData.zone = normalizedData.zone;
+  if (data.section !== undefined) updateData.section = normalizedData.section;
   if (data.phone !== undefined) {
-    if (data.phone !== existing[0].phone) {
+    if (normalizedData.phone !== existing[0].phone) {
       const duplicate = await db
         .select()
         .from(voter)
         .where(
           and(
             eq(voter.campaignId, existing[0].campaignId),
-            eq(voter.phone, data.phone),
+            eq(voter.phone, normalizedData.phone),
             sql`${voter.id} != ${voterId}`
           )
         )
@@ -477,14 +507,39 @@ export async function editVoter(
         };
       }
     }
-    updateData.phone = data.phone;
+    updateData.phone = normalizedData.phone;
   }
 
-  const [updated] = await db
-    .update(voter)
-    .set(updateData)
-    .where(eq(voter.id, voterId))
-    .returning({ id: voter.id });
+  let updated: { id: string } | undefined;
+  try {
+    [updated] = await db
+      .update(voter)
+      .set(updateData)
+      .where(eq(voter.id, voterId))
+      .returning({ id: voter.id });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return {
+        ok: false,
+        code: "DUPLICATE_PHONE",
+        message: "Telefone já cadastrado nesta campanha",
+      };
+    }
+
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao editar eleitor",
+    };
+  }
+
+  if (!updated) {
+    return {
+      ok: false,
+      code: "NOT_FOUND",
+      message: "Eleitor não encontrado",
+    };
+  }
 
   return {
     ok: true,

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { LeaderActions } from "./leader-actions";
 
 export default async function LideresPage() {
   const result = await auth.api.getSession({
@@ -91,14 +92,17 @@ export default async function LideresPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>
-                      Criado em:{" "}
-                      {new Date(leader.createdAt).toLocaleDateString("pt-BR")}
-                    </span>
-                    {leader.banReason && (
-                      <span>Motivo: {leader.banReason}</span>
-                    )}
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                      <span>
+                        Criado em:{" "}
+                        {new Date(leader.createdAt).toLocaleDateString("pt-BR")}
+                      </span>
+                      {leader.banReason && (
+                        <span>Motivo: {leader.banReason}</span>
+                      )}
+                    </div>
+                    <LeaderActions leaderId={leader.id} disabled={leader.banned} />
                   </div>
                 </CardContent>
               </Card>

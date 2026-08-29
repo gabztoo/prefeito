@@ -2,9 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { listVotersAction, getVoterStatsAction } from "./actions";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { VotersTable } from "./voters-table";
 import { VotersFilters } from "./voters-filters";
 import { VotersPagination } from "./voters-pagination";
@@ -120,7 +118,6 @@ export default async function EleitoresPage({ searchParams }: Props) {
               <VotersTable
                 voters={votersResult.data.voters}
                 isAdmin={isAdmin}
-                currentPage={page}
               />
             )}
 

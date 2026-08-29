@@ -204,7 +204,7 @@ export default async function CampanhaDetailPage({
               <CardTitle>Líderes Vinculados</CardTitle>
             </CardHeader>
             <CardContent>
-              <LeaderCampaignLinks links={linkedLeaderLinks} />
+              <LeaderCampaignLinks links={linkedLeaderLinks} isAdmin />
             </CardContent>
           </Card>
         </div>

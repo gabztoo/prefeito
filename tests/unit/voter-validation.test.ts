@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { validateVoterData, validateName, validateZone, validateSection, validatePhone } from "@/lib/validation";
+import { getVoterSearchTerms } from "@/lib/services/voter";
 
 describe("Voter Validation", () => {
+  describe("getVoterSearchTerms", () => {
+    it("supports searching by name and normalized phone digits", () => {
+      expect(getVoterSearchTerms("(11) 99999-9999")).toEqual({
+        name: "(11) 99999-9999",
+        phone: "11999999999",
+      });
+    });
+
+    it("does not create a match-all phone pattern for name searches", () => {
+      expect(getVoterSearchTerms("Maria Silva")).toEqual({
+        name: "Maria Silva",
+        phone: null,
+      });
+    });
+  });
+
   describe("validateName", () => {
     it("should accept valid name", () => {
       const result = validateName("João da Silva");

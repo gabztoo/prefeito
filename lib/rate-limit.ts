@@ -47,6 +47,10 @@ export function getCurrentWindow(): number {
   return Math.floor(Date.now() / (10 * 60 * 1000));
 }
 
+export function getWindowExpiresAt(window: number): Date {
+  return new Date((window + 1) * 10 * 60 * 1000);
+}
+
 /**
  * Get IP from request headers (Vercel or standard)
  */
@@ -98,11 +102,26 @@ import { sql } from "drizzle-orm";
 export async function incrementRateLimit(
   ip: string,
   linkId: string,
-  windowMinutes: number
+  window: number
 ): Promise<{ allowed: boolean; count: number }> {
-  const bucketHash = computeBucketHash(ip, linkId, windowMinutes);
-  const expiresAt = new Date(Date.now() + windowMinutes * 60 * 1000);
-  const result = await db.insert(registration_rate_limit).values({ bucketHash, count: 1, expiresAt }).onConflictDoUpdate({ target: registration_rate_limit.bucketHash, set: { count: sql`LEAST(${registration_rate_limit.count} + 1, 100)`, updatedAt: new Date() } }).returning({ count: registration_rate_limit.count });
-  const count = result[0]?.count ?? 1;
-  return { allowed: count <= 5, count };
+  const bucketHash = computeBucketHash(ip, linkId, window);
+  const expiresAt = getWindowExpiresAt(window);
+  const result = await db
+    .insert(registration_rate_limit)
+    .values({ bucketHash, count: 1, expiresAt })
+    .onConflictDoUpdate({
+      target: registration_rate_limit.bucketHash,
+      set: {
+        count: sql`${registration_rate_limit.count} + 1`,
+        updatedAt: new Date(),
+      },
+      where: sql`${registration_rate_limit.count} < 5`,
+    })
+    .returning({ count: registration_rate_limit.count });
+
+  if (result.length === 0) {
+    return { allowed: false, count: 5 };
+  }
+
+  return { allowed: true, count: result[0].count };
 }
