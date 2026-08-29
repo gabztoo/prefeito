@@ -296,59 +296,84 @@ export async function regenerateCampaignLeaderLink(
   adminId: string
 ): Promise<ActionResult<{ id: string; publicCode: string }>> {
   try {
-    const [admin] = await db
-      .select({ role: user.role })
-      .from(user)
-      .where(eq(user.id, adminId))
-      .limit(1);
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
 
-    if (admin?.role !== "admin") {
-      return {
-        ok: false,
-        code: "FORBIDDEN",
-        message: "Apenas administradores podem regenerar links",
-      };
-    }
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem regenerar links",
+        };
+      }
 
-    const [existingLink] = await db
-      .select({
-        id: campaign_leader.id,
-        campaignStatus: campaign.status,
-        leaderBanned: user.banned,
-      })
-      .from(campaign_leader)
-      .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
-      .innerJoin(user, eq(user.id, campaign_leader.leaderId))
-      .where(eq(campaign_leader.id, campaignLeaderId))
-      .limit(1);
+      await tx.execute(sql`
+        SELECT c."id"
+        FROM "campaign" c
+        INNER JOIN "campaign_leader" cl ON cl."campaignId" = c."id"
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF c
+      `);
 
-    if (!existingLink) {
-      return {
-        ok: false,
-        code: "NOT_FOUND",
-        message: "Vínculo não encontrado",
-      };
-    }
+      await tx.execute(sql`
+        SELECT cl."id"
+        FROM "campaign_leader" cl
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF cl
+      `);
 
-    const [link] = await db
-      .update(campaign_leader)
-      .set({
-        publicCode: generatePublicCode(),
-        active: existingLink.campaignStatus !== CampaignStatus.CLOSED && !existingLink.leaderBanned,
-        updatedAt: new Date(),
-      })
-      .where(eq(campaign_leader.id, campaignLeaderId))
-      .returning({ id: campaign_leader.id, publicCode: campaign_leader.publicCode });
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        INNER JOIN "campaign_leader" cl ON cl."leaderId" = u."id"
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF u
+      `);
 
-    if (!link) {
-      return {
-        ok: false,
-        code: "NOT_FOUND",
-        message: "Vínculo não encontrado",
-      };
-    }
+      const [existingLink] = await tx
+        .select({
+          id: campaign_leader.id,
+          campaignStatus: campaign.status,
+          leaderBanned: user.banned,
+        })
+        .from(campaign_leader)
+        .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
+        .innerJoin(user, eq(user.id, campaign_leader.leaderId))
+        .where(eq(campaign_leader.id, campaignLeaderId))
+        .limit(1);
 
-    return { ok: true, data: link };
+      if (!existingLink) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Vínculo não encontrado",
+        };
+      }
+
+      const [link] = await tx
+        .update(campaign_leader)
+        .set({
+          publicCode: generatePublicCode(),
+          active: existingLink.campaignStatus !== CampaignStatus.CLOSED && !existingLink.leaderBanned,
+          updatedAt: new Date(),
+        })
+        .where(eq(campaign_leader.id, campaignLeaderId))
+        .returning({ id: campaign_leader.id, publicCode: campaign_leader.publicCode });
+
+      if (!link) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Vínculo não encontrado",
+        };
+      }
+
+      return { ok: true, data: link };
+    });
   } catch {
     return {
       ok: false,

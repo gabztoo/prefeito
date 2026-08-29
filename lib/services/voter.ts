@@ -364,9 +364,21 @@ export async function getVoterStats(
         campaignName: campaign.name,
         total: count(voter.id),
       })
-      .from(campaign)
-      .innerJoin(voter, eq(campaign.id, voter.campaignId))
-      .where(inArray(voter.campaignLeaderId, leaderLinkIds))
+      .from(campaign_leader)
+      .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
+      .leftJoin(
+        voter,
+        and(
+          eq(voter.campaignLeaderId, campaign_leader.id),
+          eq(voter.campaignId, campaign_leader.campaignId)
+        )
+      )
+      .where(
+        and(
+          eq(campaign_leader.leaderId, userId),
+          eq(campaign_leader.active, true)
+        )
+      )
       .groupBy(campaign.id, campaign.name);
 
     return {
