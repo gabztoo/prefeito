@@ -32,8 +32,8 @@ export default function AlterarSenhaPage() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setError("A senha deve ter pelo menos 8 caracteres.");
+    if (newPassword.length < 12 || newPassword.length > 128) {
+      setError("A senha deve ter entre 12 e 128 caracteres.");
       return;
     }
 
@@ -106,7 +106,8 @@ export default function AlterarSenhaPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={12}
+                maxLength={128}
               />
             </div>
 
@@ -119,7 +120,8 @@ export default function AlterarSenhaPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={12}
+                maxLength={128}
               />
             </div>
 

@@ -7,6 +7,7 @@ export function isDisabledAuthPath(pathname: string): boolean {
     authPath.startsWith("/sign-up/") ||
     authPath === "/reset-password" ||
     authPath.startsWith("/reset-password/") ||
+    authPath === "/change-password" ||
     authPath === "/admin" ||
     authPath.startsWith("/admin/")
   );
