@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { computeHmac, computeBucketHash, isHoneypotFilled, checkRateLimit } from "@/lib/rate-limit";
+import {
+  computeHmac,
+  computeBucketHash,
+  getWindowExpiresAt,
+  isHoneypotFilled,
+  checkRateLimit,
+} from "@/lib/rate-limit";
 
 describe("Rate Limit", () => {
   describe("computeHmac", () => {
@@ -103,6 +109,12 @@ describe("Rate Limit", () => {
       const result = checkRateLimit(0, 5);
       expect(result.allowed).toBe(true);
       expect(result.count).toBe(0);
+    });
+  });
+
+  describe("getWindowExpiresAt", () => {
+    it("expires at the end of the current ten-minute window", () => {
+      expect(getWindowExpiresAt(123)).toEqual(new Date((123 + 1) * 10 * 60 * 1000));
     });
   });
 });

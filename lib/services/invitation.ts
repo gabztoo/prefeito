@@ -1,9 +1,17 @@
 import { db } from "@/db/drizzle";
-import { user, invitation, verification, account } from "@/db/schema";
+import {
+  user,
+  invitation,
+  verification,
+  account,
+  session,
+  campaign_leader,
+} from "@/db/schema";
 import { eq, and, gt, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
+import { z } from "zod";
 
 export const LEADER_DEFAULT_PASSWORD = "12345678";
 
@@ -66,6 +74,10 @@ export interface CompletePasswordResetInput {
 
 export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_LENGTH = 128;
+export const passwordSchema = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH)
+  .max(PASSWORD_MAX_LENGTH);
 
 export function getPasswordValidationError(password: unknown): string | null {
   if (
@@ -339,6 +351,102 @@ export async function completePasswordReset(
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao redefinir senha",
+    };
+  }
+}
+
+export async function deactivateLeader(
+  leaderId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem desativar líderes",
+        };
+      }
+
+      const [leader] = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .where(eq(user.id, leaderId))
+        .limit(1);
+
+      if (!leader || leader.role !== "leader") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Líder não encontrado",
+        };
+      }
+
+      await tx.execute(sql`
+        SELECT c."id"
+        FROM "campaign" c
+        INNER JOIN "campaign_leader" cl ON cl."campaignId" = c."id"
+        WHERE cl."leaderId" = ${leaderId}
+        ORDER BY c."id"
+        FOR UPDATE OF c
+      `);
+
+      await tx.execute(sql`
+        SELECT cl."id"
+        FROM "campaign_leader" cl
+        WHERE cl."leaderId" = ${leaderId}
+        ORDER BY cl."campaignId", cl."id"
+        FOR UPDATE OF cl
+      `);
+
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        WHERE u."id" = ${leaderId}
+        FOR UPDATE OF u
+      `);
+
+      await tx
+        .update(invitation)
+        .set({ status: InvitationStatus.REVOKED, revokedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(invitation.userId, leaderId),
+            eq(invitation.status, InvitationStatus.PENDING)
+          )
+        );
+
+      await tx
+        .update(campaign_leader)
+        .set({ active: false, updatedAt: new Date() })
+        .where(eq(campaign_leader.leaderId, leaderId));
+
+      await tx
+        .update(user)
+        .set({
+          banned: true,
+          banReason: "deactivated",
+          banExpires: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, leaderId));
+
+      await tx.delete(session).where(eq(session.userId, leaderId));
+
+      return { ok: true, data: { id: leaderId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao desativar líder",
     };
   }
 }

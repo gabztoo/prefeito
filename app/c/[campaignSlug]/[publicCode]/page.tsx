@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import Link from "next/link";
 import { VoterRegistrationForm } from "./voter-registration-form";
 import { CampaignStatus, resolvePublicLink } from "@/lib/services/campaign";
 
@@ -42,7 +43,16 @@ export default async function PublicVoterRegistrationPage({ params }: PageProps)
         </CardHeader>
         <CardContent>
           {isOpen ? (
-            <VoterRegistrationForm campaignSlug={campaignSlug} publicCode={publicCode} />
+            <>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Usaremos estes dados exclusivamente para organizar a campanha. Saiba mais na{" "}
+                <Link href="/privacidade" className="underline underline-offset-4">
+                  política de privacidade
+                </Link>
+                .
+              </p>
+              <VoterRegistrationForm campaignSlug={campaignSlug} publicCode={publicCode} />
+            </>
           ) : (
             <p className="text-center text-sm text-muted-foreground">
               Esta campanha não está aceitando novos cadastros no momento.

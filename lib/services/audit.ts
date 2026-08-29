@@ -1,3 +1,6 @@
+import { db } from "@/db/drizzle";
+import { audit_event } from "@/db/schema";
+
 export type AuditAction =
   | "create"
   | "read"
@@ -13,6 +16,7 @@ export type AuditEntity =
   | "user"
   | "voter"
   | "campaign"
+  | "campaign_link"
   | "election"
   | "export"
   | "invitation"
@@ -71,6 +75,19 @@ export async function logAuditEvent(params: {
 
   if (process.env.NODE_ENV === "development") {
     console.log("[AUDIT]", JSON.stringify(entry, null, 2));
+  }
+
+  if (params.actorId && params.entityId) {
+    try {
+      await db.insert(audit_event).values({
+        actorId: params.actorId,
+        action: params.action,
+        entityType: params.entity,
+        entityId: params.entityId,
+      });
+    } catch (error) {
+      console.error("[AUDIT] Failed to persist audit log:", error);
+    }
   }
 
   if (process.env.AUDIT_WEBHOOK_URL) {

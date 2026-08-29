@@ -2,14 +2,22 @@
   "name": "prefeito",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    },
+    "next": {
+      "postcss": "8.5.23"
+    }
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:integration": "vitest run --config vitest.config.ts",
+    "test": "vitest run tests/unit",
+    "test:integration": "vitest run --config vitest.config.ts tests/integration",
     "test:e2e": "playwright test",
     "seed:admin": "npx tsx scripts/seed-admin.ts"
   },
@@ -79,6 +87,7 @@
     "@types/slug": "^5.0.9",
     "@vitest/ui": "^4.1.11",
     "drizzle-kit": "^0.31.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
     "tailwindcss": "^4.1.7",

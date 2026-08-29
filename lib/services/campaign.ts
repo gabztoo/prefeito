@@ -1,6 +1,6 @@
 import { db } from "@/db/drizzle";
 import { campaign, campaign_leader, user } from "@/db/schema";
-import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
 
@@ -49,6 +49,11 @@ export function buildPublicLinkUrl(
     campaignSlug,
     publicCode
   )}`;
+}
+
+export function buildWhatsAppShareUrl(publicUrl: string, campaignName: string): string {
+  const message = `Cadastre-se na campanha ${campaignName}: ${publicUrl}`;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
 export function normalizeCampaignSlug(value: string): string {
@@ -239,6 +244,141 @@ export async function assignLeaderToCampaign(
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao vincular líder à campanha",
+    };
+  }
+}
+
+export async function revokeCampaignLeaderLink(
+  campaignLeaderId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const [admin] = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, adminId))
+      .limit(1);
+
+    if (admin?.role !== "admin") {
+      return {
+        ok: false,
+        code: "FORBIDDEN",
+        message: "Apenas administradores podem revogar links",
+      };
+    }
+
+    const [link] = await db
+      .update(campaign_leader)
+      .set({ active: false, updatedAt: new Date() })
+      .where(eq(campaign_leader.id, campaignLeaderId))
+      .returning({ id: campaign_leader.id });
+
+    if (!link) {
+      return {
+        ok: false,
+        code: "NOT_FOUND",
+        message: "Vínculo não encontrado",
+      };
+    }
+
+    return { ok: true, data: link };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao revogar link",
+    };
+  }
+}
+
+export async function regenerateCampaignLeaderLink(
+  campaignLeaderId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string; publicCode: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem regenerar links",
+        };
+      }
+
+      await tx.execute(sql`
+        SELECT c."id"
+        FROM "campaign" c
+        INNER JOIN "campaign_leader" cl ON cl."campaignId" = c."id"
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF c
+      `);
+
+      await tx.execute(sql`
+        SELECT cl."id"
+        FROM "campaign_leader" cl
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF cl
+      `);
+
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        INNER JOIN "campaign_leader" cl ON cl."leaderId" = u."id"
+        WHERE cl."id" = ${campaignLeaderId}
+        FOR UPDATE OF u
+      `);
+
+      const [existingLink] = await tx
+        .select({
+          id: campaign_leader.id,
+          campaignStatus: campaign.status,
+          leaderBanned: user.banned,
+        })
+        .from(campaign_leader)
+        .innerJoin(campaign, eq(campaign.id, campaign_leader.campaignId))
+        .innerJoin(user, eq(user.id, campaign_leader.leaderId))
+        .where(eq(campaign_leader.id, campaignLeaderId))
+        .limit(1);
+
+      if (!existingLink) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Vínculo não encontrado",
+        };
+      }
+
+      const [link] = await tx
+        .update(campaign_leader)
+        .set({
+          publicCode: generatePublicCode(),
+          active: existingLink.campaignStatus !== CampaignStatus.CLOSED && !existingLink.leaderBanned,
+          updatedAt: new Date(),
+        })
+        .where(eq(campaign_leader.id, campaignLeaderId))
+        .returning({ id: campaign_leader.id, publicCode: campaign_leader.publicCode });
+
+      if (!link) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Vínculo não encontrado",
+        };
+      }
+
+      return { ok: true, data: link };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao regenerar link",
     };
   }
 }
@@ -594,7 +734,14 @@ export async function getCampaign(
       })
       .from(campaign_leader)
       .innerJoin(user, eq(user.id, campaign_leader.leaderId))
-      .where(eq(campaign_leader.campaignId, id));
+      .where(
+        role === "leader"
+          ? and(
+              eq(campaign_leader.campaignId, id),
+              eq(campaign_leader.leaderId, userId)
+            )
+          : eq(campaign_leader.campaignId, id)
+      );
 
     return {
       ok: true,

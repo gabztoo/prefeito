@@ -10,10 +10,13 @@ import {
   listCampaigns,
   getCampaign,
   assignLeaderToCampaign,
+  revokeCampaignLeaderLink,
+  regenerateCampaignLeaderLink,
   listLeaderCampaignLinks,
   CampaignStatus,
 } from "@/lib/services/campaign";
 import { ActionResult } from "@/lib/types";
+import { logAuditEvent } from "@/lib/services/audit";
 
 export async function createCampaignAction(data: {
   name: string;
@@ -45,6 +48,14 @@ export async function createCampaignAction(data: {
   if (!campaignResult.ok) {
     return campaignResult;
   }
+
+  await logAuditEvent({
+    action: "create",
+    entity: "campaign",
+    actorId: result.session.userId,
+    actorEmail: result.user?.email,
+    entityId: campaignResult.data.id,
+  });
 
   return {
     ok: true,
@@ -86,6 +97,14 @@ export async function updateCampaignAction(
     return campaignResult;
   }
 
+  await logAuditEvent({
+    action: "update",
+    entity: "campaign",
+    actorId: result.session.userId,
+    actorEmail: result.user?.email,
+    entityId: campaignResult.data.id,
+  });
+
   return {
     ok: true,
     data: { id: campaignResult.data.id },
@@ -126,6 +145,15 @@ export async function transitionCampaignAction(
     return campaignResult;
   }
 
+  await logAuditEvent({
+    action: "update",
+    entity: "campaign",
+    actorId: result.session.userId,
+    actorEmail: result.user?.email,
+    entityId: campaignResult.data.id,
+    metadata: { status: toStatus },
+  });
+
   return {
     ok: true,
     data: { id: campaignResult.data.id },
@@ -159,8 +187,94 @@ export async function assignLeaderToCampaignAction(
   const linkResult = await assignLeaderToCampaign(campaignId, leaderId);
   if (linkResult.ok) {
     revalidatePath(`/dashboard/campanhas/${campaignId}`);
+    await logAuditEvent({
+      action: "update",
+      entity: "campaign_link",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: linkResult.data.id,
+      metadata: { operation: "assign_leader", campaignId, leaderId },
+    });
   }
 
+  return linkResult;
+}
+
+export async function revokeCampaignLeaderLinkAction(
+  campaignLeaderId: string
+): Promise<ActionResult<{ id: string }>> {
+  const result = await auth.api.getSession({ headers: await headers() });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para revogar um link",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem revogar links",
+    };
+  }
+
+  const linkResult = await revokeCampaignLeaderLink(
+    campaignLeaderId,
+    result.session.userId
+  );
+  if (linkResult.ok) {
+    revalidatePath("/dashboard/campanhas", "page");
+    await logAuditEvent({
+      action: "update",
+      entity: "campaign_link",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: linkResult.data.id,
+      metadata: { operation: "revoke_link" },
+    });
+  }
+  return linkResult;
+}
+
+export async function regenerateCampaignLeaderLinkAction(
+  campaignLeaderId: string
+): Promise<ActionResult<{ id: string; publicCode: string }>> {
+  const result = await auth.api.getSession({ headers: await headers() });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para regenerar um link",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem regenerar links",
+    };
+  }
+
+  const linkResult = await regenerateCampaignLeaderLink(
+    campaignLeaderId,
+    result.session.userId
+  );
+  if (linkResult.ok) {
+    revalidatePath("/dashboard/campanhas", "page");
+    await logAuditEvent({
+      action: "update",
+      entity: "campaign_link",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: linkResult.data.id,
+      metadata: { operation: "regenerate_link" },
+    });
+  }
   return linkResult;
 }
 

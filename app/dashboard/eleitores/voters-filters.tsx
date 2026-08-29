@@ -69,7 +69,8 @@ export function VotersFilters({ isAdmin, campaignsResult }: VotersFiltersProps) 
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome..."
+                placeholder="Buscar por nome ou telefone..."
+                aria-label="Buscar por nome ou telefone"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
