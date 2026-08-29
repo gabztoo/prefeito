@@ -2,7 +2,6 @@ import {
   Shadcnui,
   TailwindCSS,
   BetterAuth,
-  Polar,
   NeonPostgres,
   Nextjs,
 } from "@/components/logos";
@@ -47,14 +46,6 @@ export default function Integrations() {
               link="https://neon.tech"
             >
               <NeonPostgres />
-            </IntegrationCard>
-
-            <IntegrationCard
-              title="Polar.sh"
-              description="Developer-first subscription platform with webhooks, customer portal, and usage-based billing."
-              link="https://polar.sh"
-            >
-              <Polar />
             </IntegrationCard>
 
             <IntegrationCard

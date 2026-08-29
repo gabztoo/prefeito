@@ -5,11 +5,6 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
 
-  // /api/payments/webhooks is a webhook endpoint that should be accessible without authentication
-  if (pathname.startsWith("/api/payments/webhooks")) {
-    return NextResponse.next();
-  }
-
   if (sessionCookie && ["/sign-in", "/sign-up"].includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -18,9 +13,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up"],
+  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up", "/alterar-senha"],
 };

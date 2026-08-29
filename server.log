@@ -1,0 +1,11 @@
+   ▲ Next.js 15.5.24 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://100.90.107.1:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 2.1s
+ ✓ Ready in 9.5s
+ ○ Compiling /api/auth/[...all] ...
+ ✓ Compiled /api/auth/[...all] in 8.1s

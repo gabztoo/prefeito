@@ -1,0 +1,156 @@
+2026-08-29T00:29:52.112Z ERROR [Better Auth]: Error Error: Failed query: insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"
+params: YrewCBbMUXme0udUqmhDksMHTQulYKhQ,2026-09-05T00:29:51.971Z,hrFtVMVvjC4iKMJ5KeNyL7xQ4ECXNvFQ,2026-08-29T00:29:51.973Z,2026-08-29T00:29:51.973Z,0000:0000:0000:0000:0000:0000:0000:0000,curl/8.21.0,970bdc7b-a7fa-4489-a56f-7f4e08ce9f3f
+    at p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:920)
+    at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+    at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+    ... 3 lines matching cause stack trace ...
+    at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291)
+    at async (F:\prefeito\.next\server\chunks\33.js:455:38764)
+    at async (F:\prefeito\.next\server\chunks\33.js:500:118357) {
+  query: 'insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"',
+  params: [Array],
+  [cause]: error: column "impersonatedBy" of relation "session" does not exist
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38565)
+      at async p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:895)
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+      at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:465:15762)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:549:110887)
+      at async createWithHooks (F:\prefeito\.next\server\chunks\33.js:106:17587)
+      at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291) {
+    length: 135,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '114',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_target.c',
+    line: '1068',
+    routine: 'checkInsertTargets'
+  }
+}
+# SERVER_ERROR:  Error: Failed query: insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"
+params: YrewCBbMUXme0udUqmhDksMHTQulYKhQ,2026-09-05T00:29:51.971Z,hrFtVMVvjC4iKMJ5KeNyL7xQ4ECXNvFQ,2026-08-29T00:29:51.973Z,2026-08-29T00:29:51.973Z,0000:0000:0000:0000:0000:0000:0000:0000,curl/8.21.0,970bdc7b-a7fa-4489-a56f-7f4e08ce9f3f
+    at p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:920)
+    at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+    at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+    ... 3 lines matching cause stack trace ...
+    at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291)
+    at async (F:\prefeito\.next\server\chunks\33.js:455:38764)
+    at async (F:\prefeito\.next\server\chunks\33.js:500:118357) {
+  query: 'insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"',
+  params: [Array],
+  [cause]: error: column "impersonatedBy" of relation "session" does not exist
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38565)
+      at async p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:895)
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+      at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:465:15762)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:549:110887)
+      at async createWithHooks (F:\prefeito\.next\server\chunks\33.js:106:17587)
+      at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291) {
+    length: 135,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '114',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_target.c',
+    line: '1068',
+    routine: 'checkInsertTargets'
+  }
+}
+2026-08-29T00:30:09.583Z ERROR [Better Auth]: Error Error: Failed query: insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"
+params: rNlyMyN1zEYBQcqMadxzzjYqb0kaStYE,2026-09-05T00:30:09.456Z,lm4wZfL2ZtV0gx5dVUY3q6B5bnexhAfb,2026-08-29T00:30:09.456Z,2026-08-29T00:30:09.456Z,0000:0000:0000:0000:0000:0000:0000:0000,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36,970bdc7b-a7fa-4489-a56f-7f4e08ce9f3f
+    at p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:920)
+    at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+    at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+    ... 3 lines matching cause stack trace ...
+    at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291)
+    at async (F:\prefeito\.next\server\chunks\33.js:455:38764)
+    at async (F:\prefeito\.next\server\chunks\33.js:500:118357) {
+  query: 'insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"',
+  params: [Array],
+  [cause]: error: column "impersonatedBy" of relation "session" does not exist
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38565)
+      at async p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:895)
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+      at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:465:15762)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:549:110887)
+      at async createWithHooks (F:\prefeito\.next\server\chunks\33.js:106:17587)
+      at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291) {
+    length: 135,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '114',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_target.c',
+    line: '1068',
+    routine: 'checkInsertTargets'
+  }
+}
+# SERVER_ERROR:  Error: Failed query: insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"
+params: rNlyMyN1zEYBQcqMadxzzjYqb0kaStYE,2026-09-05T00:30:09.456Z,lm4wZfL2ZtV0gx5dVUY3q6B5bnexhAfb,2026-08-29T00:30:09.456Z,2026-08-29T00:30:09.456Z,0000:0000:0000:0000:0000:0000:0000:0000,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36,970bdc7b-a7fa-4489-a56f-7f4e08ce9f3f
+    at p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:920)
+    at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+    at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+    ... 3 lines matching cause stack trace ...
+    at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291)
+    at async (F:\prefeito\.next\server\chunks\33.js:455:38764)
+    at async (F:\prefeito\.next\server\chunks\33.js:500:118357) {
+  query: 'insert into "session" ("id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId") values ($1, $2, $3, $4, $5, $6, $7, $8, default, default) returning "id", "expiresAt", "token", "createdAt", "updatedAt", "ipAddress", "userAgent", "userId", "impersonatedBy", "activeOrganizationId"',
+  params: [Array],
+  [cause]: error: column "impersonatedBy" of relation "session" does not exist
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38565)
+      at async p.queryWithCache (F:\prefeito\.next\server\chunks\33.js:558:895)
+      at async (F:\prefeito\.next\server\chunks\33.js:549:38355)
+      at async z (F:\prefeito\.next\server\chunks\33.js:465:8985)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:465:15762)
+      at async Object.create (F:\prefeito\.next\server\chunks\33.js:549:110887)
+      at async createWithHooks (F:\prefeito\.next\server\chunks\33.js:106:17587)
+      at async Object.createSession (F:\prefeito\.next\server\chunks\33.js:106:25291) {
+    length: 135,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '114',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_target.c',
+    line: '1068',
+    routine: 'checkInsertTargets'
+  }
+}

@@ -4,24 +4,17 @@ import { ThemeProvider } from "../components/provider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
-  title: "Next.js Starter Kit - Launch Your SAAS",
+  title: "Sistema de Cadastro Eleitoral",
   description:
-    "A modern, full-stack Next.js starter kit with authentication, payments, and dashboard. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
+    "Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
   openGraph: {
-    title: "Next.js Starter Kit",
+    title: "Sistema de Cadastro Eleitoral",
     description:
-      "A modern, full-stack Next.js starter kit with authentication, payments, and dashboard. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-    url: "nextstarter.xyz",
-    siteName: "Next.js Starter Kit",
-    images: [
-      {
-        url: "https://jdj14ctwppwprnqu.public.blob.vercel-storage.com/nsk-w9fFwBBmLDLxrB896I4xqngTUEEovS.png",
-        width: 1200,
-        height: 630,
-        alt: "Next.js Starter Kit",
-      },
-    ],
-    locale: "en-US",
+      "Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
+    url: "",
+    siteName: "Sistema de Cadastro Eleitoral",
+    images: [],
+    locale: "pt_BR",
     type: "website",
   },
 };
@@ -32,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`font-[-apple-system,BlinkMacSystemFont]antialiased`}>
         <ThemeProvider
           attribute="class"

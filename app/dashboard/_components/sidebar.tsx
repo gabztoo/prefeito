@@ -3,12 +3,12 @@
 import UserProfile from "@/components/user-profile";
 import clsx from "clsx";
 import {
-  Banknote,
   HomeIcon,
-  LucideIcon,
-  MessageCircleIcon,
+  Vote,
+  Users,
+  UserCheck,
   Settings,
-  Upload,
+  LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,34 +17,46 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   {
-    label: "Overview",
+    label: "Visão Geral",
     href: "/dashboard",
     icon: HomeIcon,
   },
   {
-    label: "Chat",
-    href: "/dashboard/chat",
-    icon: MessageCircleIcon,
+    label: "Campanhas",
+    href: "/dashboard/campanhas",
+    icon: Vote,
+    adminOnly: true,
   },
   {
-    label: "Upload",
-    href: "/dashboard/upload",
-    icon: Upload,
+    label: "Líderes",
+    href: "/dashboard/lideres",
+    icon: UserCheck,
+    adminOnly: true,
   },
   {
-    label: "Payment Gated",
-    href: "/dashboard/payment",
-    icon: Banknote,
+    label: "Eleitores",
+    href: "/dashboard/eleitores",
+    icon: Users,
   },
 ];
 
-export default function DashboardSideBar() {
+interface DashboardSideBarProps {
+  userRole?: string;
+}
+
+export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const isAdmin = userRole === "admin";
+
+  const filteredNavItems = navItems.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
 
   return (
     <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background">
@@ -55,13 +67,13 @@ export default function DashboardSideBar() {
             className="flex items-center font-semibold hover:cursor-pointer"
             href="/"
           >
-            <span>Nextjs Starter Kit</span>
+            <span>Sistema Eleitoral</span>
           </Link>
         </div>
 
         <nav className="flex flex-col h-full justify-between items-start w-full space-y-1">
           <div className="w-full space-y-1 p-4">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <div
                 key={item.href}
                 onClick={() => router.push(item.href)}
@@ -90,7 +102,7 @@ export default function DashboardSideBar() {
                 )}
               >
                 <Settings className="h-4 w-4" />
-                Settings
+                Configurações
               </div>
             </div>
             <UserProfile />
