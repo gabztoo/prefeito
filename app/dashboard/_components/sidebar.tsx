@@ -7,6 +7,7 @@ import {
   Vote,
   Users,
   UserCheck,
+  Shield,
   Settings,
   LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,12 @@ const navItems: NavItem[] = [
     icon: UserCheck,
     adminOnly: true,
     coordinatorOnly: true,
+  },
+  {
+    label: "Coordenadores",
+    href: "/dashboard/coordenadores",
+    icon: Shield,
+    adminOnly: true,
   },
   {
     label: "Eleitores",

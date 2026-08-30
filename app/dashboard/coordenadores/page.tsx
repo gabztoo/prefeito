@@ -1,0 +1,134 @@
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { listCoordinators } from "@/lib/services/invitation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { CoordenadorActions } from "./coordenador-actions";
+
+export default async function CoordenadoresPage() {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    redirect("/sign-in");
+  }
+
+  if (result.user?.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  const coordinatorsResult = await listCoordinators();
+
+  if (!coordinatorsResult.ok) {
+    return (
+      <section className="flex flex-col items-start justify-start p-6 w-full">
+        <div className="w-full">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Coordenadores
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Erro ao carregar coordenadores: {coordinatorsResult.message}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const { coordinators, total } = coordinatorsResult.data;
+
+  const getStatusBadge = (
+    banned: boolean,
+    invitationStatus: string | null
+  ) => {
+    if (banned) {
+      return <Badge variant="destructive">Desativado</Badge>;
+    }
+    if (invitationStatus === "pending") {
+      return <Badge variant="outline">Pendente</Badge>;
+    }
+    if (invitationStatus === "accepted") {
+      return <Badge variant="default">Ativo</Badge>;
+    }
+    return <Badge variant="secondary">Sem convite</Badge>;
+  };
+
+  return (
+    <section className="flex flex-col items-start justify-start p-6 w-full">
+      <div className="w-full">
+        <div className="flex flex-col items-start justify-center gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Coordenadores
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie os coordenadores do sistema
+          </p>
+        </div>
+        <div className="mt-4 flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            {total} coordenador{total !== 1 ? "es" : ""} encontrado
+            {total !== 1 ? "s" : ""}
+          </p>
+          <Link href="/dashboard/coordenadores/novo">
+            <Button>Novo Convite</Button>
+          </Link>
+        </div>
+        <div className="mt-6 grid gap-4">
+          {coordinators.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground text-center">
+                  Nenhum coordenador encontrado. Convide coordenadores para
+                  começar.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            coordinators.map((coordinator) => (
+              <Card key={coordinator.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {coordinator.name}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {coordinator.email}
+                      </p>
+                    </div>
+                    {getStatusBadge(
+                      coordinator.banned,
+                      coordinator.invitationStatus
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                      <span>
+                        Criado em:{" "}
+                        {new Date(coordinator.createdAt).toLocaleDateString(
+                          "pt-BR"
+                        )}
+                      </span>
+                      {coordinator.banReason && (
+                        <span>Motivo: {coordinator.banReason}</span>
+                      )}
+                    </div>
+                    <CoordenadorActions
+                      coordinatorId={coordinator.id}
+                      disabled={coordinator.banned}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
