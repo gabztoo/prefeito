@@ -13,6 +13,13 @@ import { logAuditEvent } from "@/lib/services/audit";
 export async function inviteCoordinatorAction(data: {
   firstName: string;
   lastName: string;
+  rg?: string;
+  cpf?: string;
+  address?: string;
+  imageUrl?: string;
+  voterTitle?: string;
+  zone?: string;
+  section?: string;
 }): Promise<ActionResult<{ id: string }>> {
   const result = await auth.api.getSession({
     headers: await headers(),
@@ -38,6 +45,13 @@ export async function inviteCoordinatorAction(data: {
     firstName: data.firstName,
     lastName: data.lastName,
     adminId: result.session.userId,
+    rg: data.rg,
+    cpf: data.cpf,
+    address: data.address,
+    imageUrl: data.imageUrl,
+    voterTitle: data.voterTitle,
+    zone: data.zone,
+    section: data.section,
   });
 
   if (!invitationResult.ok) {

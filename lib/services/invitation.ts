@@ -62,12 +62,24 @@ export interface InviteLeaderInput {
   lastName: string;
   adminId: string;
   coordinatorId?: string;
+  voterTitle?: string;
+  zone?: string;
+  section?: string;
+  address?: string;
+  localAtuacao?: string;
 }
 
 export interface InviteCoordinatorInput {
   firstName: string;
   lastName: string;
   adminId: string;
+  rg?: string;
+  cpf?: string;
+  address?: string;
+  imageUrl?: string;
+  voterTitle?: string;
+  zone?: string;
+  section?: string;
 }
 
 export interface AcceptInviteInput {
@@ -366,6 +378,11 @@ export async function inviteLeader(
       role: "leader",
       emailVerified: true,
       coordinatorId: input.coordinatorId || null,
+      voterTitle: input.voterTitle || null,
+      zone: input.zone || null,
+      section: input.section || null,
+      address: input.address || null,
+      localAtuacao: input.localAtuacao || null,
       ...getLeaderProvisioningState(),
     });
 
@@ -881,6 +898,13 @@ export async function inviteCoordinator(
           .set({
             ...getLeaderProvisioningState(),
             role: "coordinator",
+            rg: input.rg || null,
+            cpf: input.cpf || null,
+            address: input.address || null,
+            imageUrl: input.imageUrl || null,
+            voterTitle: input.voterTitle || null,
+            zone: input.zone || null,
+            section: input.section || null,
             updatedAt: new Date(),
           })
           .where(eq(user.id, existingUser.id));
@@ -918,6 +942,13 @@ export async function inviteCoordinator(
       name: `${input.firstName} ${input.lastName}`,
       role: "coordinator",
       emailVerified: true,
+      rg: input.rg || null,
+      cpf: input.cpf || null,
+      address: input.address || null,
+      imageUrl: input.imageUrl || null,
+      voterTitle: input.voterTitle || null,
+      zone: input.zone || null,
+      section: input.section || null,
       ...getLeaderProvisioningState(),
     });
 

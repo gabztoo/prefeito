@@ -23,6 +23,7 @@ const voterFormSchema = z.object({
   zone: z.string().regex(/^\d{1,4}$/, "Zona deve conter apenas dígitos (1-4 caracteres)"),
   section: z.string().regex(/^\d{1,4}$/, "Seção deve conter apenas dígitos (1-4 caracteres)"),
   phone: z.string().min(10, "Telefone inválido").max(11),
+  voterTitle: z.string().min(12, "Título de eleitor deve ter 12 dígitos").max(12).regex(/^\d{12}$/, "Título deve conter 12 dígitos"),
   honeypot: z.string().optional(),
 });
 
@@ -45,6 +46,7 @@ export function VoterRegistrationForm({ campaignSlug, publicCode }: VoterRegistr
       zone: "",
       section: "",
       phone: "",
+      voterTitle: "",
       honeypot: "",
     },
   });
@@ -192,6 +194,26 @@ export function VoterRegistrationForm({ campaignSlug, publicCode }: VoterRegistr
                 />
               </FormControl>
               <FormMessage id="phone-error" />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="voterTitle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="voterTitle">Título de Eleitor</FormLabel>
+              <FormControl>
+                <Input
+                  id="voterTitle"
+                  placeholder="123456789012"
+                  aria-describedby="voterTitle-error"
+                  aria-invalid={!!form.formState.errors.voterTitle}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage id="voterTitle-error" />
             </FormItem>
           )}
         />

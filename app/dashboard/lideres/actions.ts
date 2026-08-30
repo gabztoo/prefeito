@@ -15,6 +15,11 @@ import { logAuditEvent } from "@/lib/services/audit";
 export async function inviteLeaderAction(data: {
   firstName: string;
   lastName: string;
+  voterTitle?: string;
+  zone?: string;
+  section?: string;
+  address?: string;
+  localAtuacao?: string;
 }): Promise<ActionResult<{ id: string }>> {
   const result = await auth.api.getSession({
     headers: await headers(),
@@ -41,6 +46,11 @@ export async function inviteLeaderAction(data: {
     lastName: data.lastName,
     adminId: result.session.userId,
     coordinatorId: result.user?.role === "coordinator" ? result.session.userId : undefined,
+    voterTitle: data.voterTitle,
+    zone: data.zone,
+    section: data.section,
+    address: data.address,
+    localAtuacao: data.localAtuacao,
   });
 
   if (!invitationResult.ok) {

@@ -14,12 +14,16 @@ export default function NovoLiderPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [voterTitle, setVoterTitle] = useState("");
+  const [zone, setZone] = useState("");
+  const [section, setSection] = useState("");
+  const [address, setAddress] = useState("");
+  const [localAtuacao, setLocalAtuacao] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [login, setLogin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Generate login from first and last name
   const generateLogin = (first: string, last: string) => {
     if (first && last) {
       return `${first}_${last}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_]/g, "");
@@ -42,6 +46,11 @@ export default function NovoLiderPage() {
       const result = await inviteLeaderAction({
         firstName,
         lastName,
+        voterTitle,
+        zone,
+        section,
+        address,
+        localAtuacao,
       });
 
       if (result.ok) {
@@ -87,13 +96,13 @@ export default function NovoLiderPage() {
             </Button>
           </Link>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Novo Convite
+            Novo Líder
           </h1>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Convidar novo líder</CardTitle>
+            <CardTitle>Cadastrar novo líder</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,6 +137,58 @@ export default function NovoLiderPage() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  placeholder="Rua, número, bairro, cidade - UF"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="localAtuacao">Local de Atuação</Label>
+                <Input
+                  id="localAtuacao"
+                  placeholder="Bairro ou região de atuação"
+                  value={localAtuacao}
+                  onChange={(e) => setLocalAtuacao(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="voterTitle">Título de Eleitor</Label>
+                  <Input
+                    id="voterTitle"
+                    placeholder="123456789012"
+                    value={voterTitle}
+                    onChange={(e) => setVoterTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="zone">Zona</Label>
+                  <Input
+                    id="zone"
+                    placeholder="0123"
+                    value={zone}
+                    onChange={(e) => setZone(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="section">Seção</Label>
+                  <Input
+                    id="section"
+                    placeholder="0456"
+                    value={section}
+                    onChange={(e) => setSection(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="login">Login (gerado automaticamente)</Label>
                 <Input
                   id="login"
@@ -145,7 +206,7 @@ export default function NovoLiderPage() {
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  O líder fará login com este senha e deverá alterá-la no primeiro acesso.
+                  O líder fará login com esta senha e deverá alterá-la no primeiro acesso.
                 </p>
               </div>
 

@@ -18,21 +18,31 @@ import {
   Users,
   Vote,
   Menu,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: typeof HomeIcon;
+  adminOnly?: boolean;
+  coordinatorOnly?: boolean;
+}
+
 interface DashboardTopNavProps {
   children: ReactNode;
   userRole?: string;
 }
 
-const navItems = [
+const navItems: NavItem[] = [
   { label: "Visão Geral", href: "/dashboard", icon: HomeIcon },
   { label: "Campanhas", href: "/dashboard/campanhas", icon: Vote },
-  { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true },
+  { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true, coordinatorOnly: true },
+  { label: "Coordenadores", href: "/dashboard/coordenadores", icon: Shield, adminOnly: true },
   { label: "Eleitores", href: "/dashboard/eleitores", icon: Users },
   { label: "Configurações", href: "/dashboard/settings", icon: Settings },
 ];
@@ -43,8 +53,12 @@ export default function DashboardTopNav({
 }: DashboardTopNavProps) {
   const pathname = usePathname();
   const isAdmin = userRole === "admin";
+  const isCoordinator = userRole === "coordinator";
   const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || isAdmin
+    (item) =>
+      (!item.adminOnly && !item.coordinatorOnly) ||
+      (item.adminOnly && isAdmin) ||
+      (item.coordinatorOnly && (isAdmin || isCoordinator))
   );
 
   return (

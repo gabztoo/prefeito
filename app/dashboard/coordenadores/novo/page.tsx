@@ -12,6 +12,13 @@ import Link from "next/link";
 export default function NovoCoordenadorPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [rg, setRg] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [address, setAddress] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [voterTitle, setVoterTitle] = useState("");
+  const [zone, setZone] = useState("");
+  const [section, setSection] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [login, setLogin] = useState("");
@@ -43,6 +50,13 @@ export default function NovoCoordenadorPage() {
       const result = await inviteCoordinatorAction({
         firstName,
         lastName,
+        rg,
+        cpf,
+        address,
+        imageUrl,
+        voterTitle,
+        zone,
+        section,
       });
 
       if (result.ok) {
@@ -90,13 +104,13 @@ export default function NovoCoordenadorPage() {
             </Button>
           </Link>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Novo Convite
+            Novo Coordenador
           </h1>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Convidar novo coordenador</CardTitle>
+            <CardTitle>Cadastrar novo coordenador</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -134,6 +148,48 @@ export default function NovoCoordenadorPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="rg">RG</Label>
+                  <Input
+                    id="rg"
+                    placeholder="12.345.678-9"
+                    value={rg}
+                    onChange={(e) => setRg(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF</Label>
+                  <Input
+                    id="cpf"
+                    placeholder="123.456.789-00"
+                    value={cpf}
+                    onChange={(e) => setCpf(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  placeholder="Rua, número, bairro, cidade - UF"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">URL da Selfie</Label>
+                <Input
+                  id="imageUrl"
+                  placeholder="https://..."
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="login">Login (gerado automaticamente)</Label>
                 <Input
@@ -142,6 +198,38 @@ export default function NovoCoordenadorPage() {
                   disabled
                   className="bg-muted"
                 />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="voterTitle">Título de Eleitor</Label>
+                  <Input
+                    id="voterTitle"
+                    placeholder="123456789012"
+                    value={voterTitle}
+                    onChange={(e) => setVoterTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="zone">Zona</Label>
+                  <Input
+                    id="zone"
+                    placeholder="0123"
+                    value={zone}
+                    onChange={(e) => setZone(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="section">Seção</Label>
+                  <Input
+                    id="section"
+                    placeholder="0456"
+                    value={section}
+                    onChange={(e) => setSection(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

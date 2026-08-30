@@ -27,6 +27,7 @@ export async function registerVoter(
     zone: string;
     section: string;
     phone: string;
+    voterTitle?: string;
     honeypot?: string;
   },
   headers: Headers
@@ -47,6 +48,8 @@ export async function registerVoter(
   }
 
   const { name, zone, section, phone } = validation.data;
+
+  const voterTitle = data.voterTitle || null;
 
   // Get IP for rate limiting
   const ip = getIpFromHeaders(headers);
@@ -156,6 +159,7 @@ export async function registerVoter(
         zone,
         section,
         phone,
+        voterTitle,
       })
       .returning({ id: voter.id });
 

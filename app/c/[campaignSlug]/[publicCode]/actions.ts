@@ -11,6 +11,7 @@ export async function submitVoterRegistrationAction(
     zone: string;
     section: string;
     phone: string;
+    voterTitle?: string;
     honeypot?: string;
   }
 ) {
