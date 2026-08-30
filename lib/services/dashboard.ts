@@ -4,10 +4,10 @@ import {
   listCampaigns,
   listLeaderCampaignLinks,
 } from "@/lib/services/campaign";
-import { listLeaders } from "@/lib/services/invitation";
+import { listLeaders, listLeadersByCoordinator } from "@/lib/services/invitation";
 import { getVoterStats } from "@/lib/services/voter";
 import { db } from "@/db/drizzle";
-import { campaign, campaign_leader, invitation, voter } from "@/db/schema";
+import { campaign, campaign_leader, invitation, voter, user } from "@/db/schema";
 import { and, count, desc, eq, gte, max, sql } from "drizzle-orm";
 
 export interface DashboardCampaign {
@@ -46,15 +46,59 @@ export async function getDashboardStats(
           eq(campaign_leader.active, true)
         )
       );
-    const campaignScope = role === "leader"
-      ? sql`${campaign.id} IN ${leaderCampaignIds}`
+
+    const coordinatorLeaderIds = role === "coordinator"
+      ? db
+          .select({ id: user.id })
+          .from(user)
+          .where(
+            and(
+              eq(user.role, "leader"),
+              eq(user.coordinatorId, userId)
+            )
+          )
       : undefined;
+
+    const coordinatorCampaignIds = role === "coordinator" && coordinatorLeaderIds
+      ? db
+          .select({ campaignId: campaign_leader.campaignId })
+          .from(campaign_leader)
+          .where(
+            and(
+              sql`${campaign_leader.leaderId} IN ${coordinatorLeaderIds}`,
+              eq(campaign_leader.active, true)
+            )
+          )
+      : undefined;
+
+    let campaignScope;
+    if (role === "leader") {
+      campaignScope = sql`${campaign.id} IN ${leaderCampaignIds}`;
+    } else if (role === "coordinator" && coordinatorCampaignIds) {
+      campaignScope = sql`${campaign.id} IN ${coordinatorCampaignIds}`;
+    }
+
     const recentSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentVoterConditions = [gte(voter.createdAt, recentSince)];
 
     if (role === "leader") {
       recentVoterConditions.push(
         sql`${voter.campaignLeaderId} IN ${leaderCampaignIds}` as typeof recentVoterConditions[number]
+      );
+    }
+
+    if (role === "coordinator" && coordinatorLeaderIds) {
+      const coordinatorLeaderLinkIds = db
+        .select({ id: campaign_leader.id })
+        .from(campaign_leader)
+        .where(
+          and(
+            sql`${campaign_leader.leaderId} IN ${coordinatorLeaderIds}`,
+            eq(campaign_leader.active, true)
+          )
+        );
+      recentVoterConditions.push(
+        sql`${voter.campaignLeaderId} IN ${coordinatorLeaderLinkIds}` as typeof recentVoterConditions[number]
       );
     }
 
@@ -123,14 +167,19 @@ export async function getDashboardStats(
       leaderlessCampaignPromise,
     ]);
 
-    const [voterStatsResult, campaignsResult, scopeResult, dashboardData] =
+    const scopeResult = role === "admin"
+      ? await listLeaders()
+      : role === "coordinator"
+      ? await listLeadersByCoordinator(userId)
+      : await listLeaderCampaignLinks(userId);
+
+    const [voterStatsResult, campaignsResult, dashboardData] =
       await Promise.all([
         getVoterStats(userId, role),
         listCampaigns(userId, role, {
           status: CampaignStatus.OPEN,
           limit: 1,
         }),
-        role === "admin" ? listLeaders() : listLeaderCampaignLinks(userId),
         dashboardDataPromise,
       ]);
     const [
@@ -147,6 +196,34 @@ export async function getDashboardStats(
 
     if (role === "admin") {
       const leadersResult = scopeResult as Awaited<ReturnType<typeof listLeaders>>;
+
+      if (!leadersResult.ok) return leadersResult;
+
+      return {
+        ok: true,
+        data: {
+          totalVoters: voterStatsResult.data.grandTotal,
+          recentVoters: Number(recentVoterResult[0]?.count ?? 0),
+          activeCampaigns: Number(campaignsResult.data.total),
+          activeLeaders: leadersResult.data.leaders.filter(
+            (leader) => !leader.banned && leader.invitationStatus === "accepted"
+          ).length,
+          activeLinks: 0,
+          pendingInvitations: Number(pendingInvitationResult[0]?.count ?? 0),
+          draftCampaigns: Number(draftCampaignResult[0]?.count ?? 0),
+          campaignsWithoutLeaders: leaderlessCampaignRows.length,
+          campaigns: campaignRows.map((campaignRow) => ({
+            ...campaignRow,
+            status: campaignRow.status as CampaignStatus,
+            voterCount: Number(campaignRow.voterCount),
+            leaderCount: Number(campaignRow.leaderCount),
+          })),
+        },
+      };
+    }
+
+    if (role === "coordinator") {
+      const leadersResult = scopeResult as Awaited<ReturnType<typeof listLeadersByCoordinator>>;
 
       if (!leadersResult.ok) return leadersResult;
 

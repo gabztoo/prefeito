@@ -1,6 +1,6 @@
 import { db } from "@/db/drizzle";
 import { campaign, campaign_leader, user } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
 
@@ -645,6 +645,30 @@ export async function listCampaigns(
       whereConditions.push(sql`${campaign.id} IN ${leaderCampaignIds}`);
     }
 
+    if (role === "coordinator") {
+      const coordinatorLeaderIds = db
+        .select({ id: user.id })
+        .from(user)
+        .where(
+          and(
+            eq(user.role, "leader"),
+            eq(user.coordinatorId, userId)
+          )
+        );
+
+      const coordinatorCampaignIds = db
+        .select({ campaignId: campaign_leader.campaignId })
+        .from(campaign_leader)
+        .where(
+          and(
+            inArray(campaign_leader.leaderId, coordinatorLeaderIds),
+            eq(campaign_leader.active, true)
+          )
+        );
+
+      whereConditions.push(sql`${campaign.id} IN ${coordinatorCampaignIds}`);
+    }
+
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
     const [countResult] = await db
@@ -723,6 +747,38 @@ export async function getCampaign(
       }
     }
 
+    if (role === "coordinator") {
+      const coordinatorLeaderIds = db
+        .select({ id: user.id })
+        .from(user)
+        .where(
+          and(
+            eq(user.role, "leader"),
+            eq(user.coordinatorId, userId)
+          )
+        );
+
+      const [hasAccess] = await db
+        .select({ id: campaign_leader.id })
+        .from(campaign_leader)
+        .where(
+          and(
+            eq(campaign_leader.campaignId, id),
+            inArray(campaign_leader.leaderId, coordinatorLeaderIds),
+            eq(campaign_leader.active, true)
+          )
+        )
+        .limit(1);
+
+      if (!hasAccess) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Você não tem acesso a esta campanha",
+        };
+      }
+    }
+
     const leaders = await db
       .select({
         id: campaign_leader.id,
@@ -739,6 +795,19 @@ export async function getCampaign(
           ? and(
               eq(campaign_leader.campaignId, id),
               eq(campaign_leader.leaderId, userId)
+            )
+          : role === "coordinator"
+          ? and(
+              eq(campaign_leader.campaignId, id),
+              inArray(
+                campaign_leader.leaderId,
+                db.select({ id: user.id }).from(user).where(
+                  and(
+                    eq(user.role, "leader"),
+                    eq(user.coordinatorId, userId)
+                  )
+                )
+              )
             )
           : eq(campaign_leader.campaignId, id)
       );

@@ -244,6 +244,7 @@ export default async function Dashboard() {
 
   const role = result.user?.role ?? "leader";
   const isAdmin = role === "admin";
+  const isCoordinator = role === "coordinator";
   const statsResult = await getDashboardStats(result.session.userId, role);
   const stats = statsResult.ok ? statsResult.data : null;
   const metrics = [
@@ -271,10 +272,10 @@ export default async function Dashboard() {
       icon: Megaphone,
     },
     {
-      label: isAdmin ? "Líderes ativos" : "Links ativos",
-      value: isAdmin ? stats?.activeLeaders : stats?.activeLinks,
-      description: isAdmin ? "Com acesso ativo" : "Disponíveis para cadastro",
-      href: isAdmin ? "/dashboard/lideres" : "/dashboard/campanhas",
+      label: isAdmin ? "Líderes ativos" : isCoordinator ? "Meus líderes" : "Links ativos",
+      value: isAdmin || isCoordinator ? stats?.activeLeaders : stats?.activeLinks,
+      description: isAdmin || isCoordinator ? "Com acesso ativo" : "Disponíveis para cadastro",
+      href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/campanhas",
       icon: UserPlus,
     },
   ];
@@ -290,11 +291,13 @@ export default async function Dashboard() {
                 Visão geral
               </p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {isAdmin ? "Painel administrativo" : "Painel do líder"}
+                {isAdmin ? "Painel administrativo" : isCoordinator ? "Painel do coordenador" : "Painel do líder"}
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
                 {isAdmin
                   ? "Acompanhe o andamento das campanhas e mantenha os próximos passos sob controle."
+                  : isCoordinator
+                  ? "Acompanhe seus líderes, campanhas e cadastros do seu coordenadoramento."
                   : "Acompanhe suas campanhas e os cadastros recebidos pelos seus links."}
               </p>
             </div>
@@ -309,6 +312,19 @@ export default async function Dashboard() {
                   <Button asChild variant="outline">
                     <Link href="/dashboard/lideres/novo">
                       <UserPlus aria-hidden="true" /> Convidar líder
+                    </Link>
+                  </Button>
+                </>
+              ) : isCoordinator ? (
+                <>
+                  <Button asChild>
+                    <Link href="/dashboard/lideres/novo">
+                      <UserPlus aria-hidden="true" /> Convidar líder
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/dashboard/campanhas">
+                      <ArrowUpRight aria-hidden="true" /> Ver campanhas
                     </Link>
                   </Button>
                 </>
@@ -358,8 +374,8 @@ export default async function Dashboard() {
           ))}
         </div>
 
-        {stats && (
-          <>
+            {stats && (
+            <>
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)]">
               <Card className="gap-0 overflow-hidden">
                 <CardHeader className="flex flex-row items-end justify-between gap-4 border-b pb-5">
@@ -381,7 +397,9 @@ export default async function Dashboard() {
                       <div>
                         <h3 className="font-medium">Nenhuma campanha ainda</h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Crie sua primeira campanha para começar a receber cadastros.
+                          {isAdmin
+                            ? "Crie sua primeira campanha para começar a receber cadastros."
+                            : "Aguarde campanhas serem criadas e vinculadas aos seus líderes."}
                         </p>
                       </div>
                       {isAdmin && (
@@ -397,7 +415,7 @@ export default async function Dashboard() {
                   )}
                 </CardContent>
               </Card>
-              {isAdmin && <AttentionPanel stats={stats} />}
+              {(isAdmin || isCoordinator) && <AttentionPanel stats={stats} />}
             </div>
 
             <CampaignDistribution campaigns={stats.campaigns} />

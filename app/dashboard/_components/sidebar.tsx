@@ -18,6 +18,7 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  coordinatorOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
     href: "/dashboard/lideres",
     icon: UserCheck,
     adminOnly: true,
+    coordinatorOnly: true,
   },
   {
     label: "Eleitores",
@@ -51,9 +53,13 @@ interface DashboardSideBarProps {
 export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   const pathname = usePathname();
   const isAdmin = userRole === "admin";
+  const isCoordinator = userRole === "coordinator";
 
   const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || isAdmin
+    (item) =>
+      (!item.adminOnly && !item.coordinatorOnly) ||
+      (item.adminOnly && isAdmin) ||
+      (item.coordinatorOnly && (isAdmin || isCoordinator))
   );
 
   return (

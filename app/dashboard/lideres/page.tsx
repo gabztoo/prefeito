@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { listLeaders } from "@/lib/services/invitation";
+import { listLeaders, listLeadersByCoordinator } from "@/lib/services/invitation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,13 @@ export default async function LideresPage() {
     redirect("/sign-in");
   }
 
-  if (result.user?.role !== "admin") {
+  if (result.user?.role !== "admin" && result.user?.role !== "coordinator") {
     redirect("/dashboard");
   }
 
-  const leadersResult = await listLeaders();
+  const leadersResult = result.user?.role === "coordinator"
+    ? await listLeadersByCoordinator(result.session.userId)
+    : await listLeaders();
 
   if (!leadersResult.ok) {
     return (
@@ -57,7 +59,9 @@ export default async function LideresPage() {
         <div className="flex flex-col items-start justify-center gap-2">
           <h1 className="text-3xl font-semibold tracking-tight">Líderes</h1>
           <p className="text-muted-foreground">
-            Gerencie os líderes das campanhas
+            {result.user?.role === "coordinator"
+              ? "Gerencie os líderes do seu coordenadoramento"
+              : "Gerencie os líderes das campanhas"}
           </p>
         </div>
         <div className="mt-4 flex justify-between items-center">

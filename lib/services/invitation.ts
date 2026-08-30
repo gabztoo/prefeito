@@ -61,6 +61,13 @@ export interface InviteLeaderInput {
   firstName: string;
   lastName: string;
   adminId: string;
+  coordinatorId?: string;
+}
+
+export interface InviteCoordinatorInput {
+  firstName: string;
+  lastName: string;
+  adminId: string;
 }
 
 export interface AcceptInviteInput {
@@ -154,11 +161,11 @@ export async function completeInitialPasswordChange(
         .where(eq(user.id, userId))
         .limit(1);
 
-      if (!leader || leader.role !== "leader") {
+      if (!leader || (leader.role !== "leader" && leader.role !== "coordinator")) {
         return {
           ok: false,
           code: "FORBIDDEN",
-          message: "Apenas líderes precisam alterar a senha inicial.",
+          message: "Apenas líderes ou coordenadores precisam alterar a senha inicial.",
         };
       }
 
@@ -358,6 +365,7 @@ export async function inviteLeader(
       name: `${input.firstName} ${input.lastName}`,
       role: "leader",
       emailVerified: true,
+      coordinatorId: input.coordinatorId || null,
       ...getLeaderProvisioningState(),
     });
 
@@ -530,22 +538,22 @@ export async function deactivateLeader(
 ): Promise<ActionResult<{ id: string }>> {
   try {
     return await db.transaction(async (tx) => {
-      const [admin] = await tx
-        .select({ role: user.role })
+      const [requester] = await tx
+        .select({ id: user.id, role: user.role })
         .from(user)
         .where(eq(user.id, adminId))
         .limit(1);
 
-      if (admin?.role !== "admin") {
+      if (requester?.role !== "admin" && requester?.role !== "coordinator") {
         return {
           ok: false,
           code: "FORBIDDEN",
-          message: "Apenas administradores podem desativar líderes",
+          message: "Apenas administradores ou coordenadores podem desativar líderes",
         };
       }
 
       const [leader] = await tx
-        .select({ id: user.id, role: user.role })
+        .select({ id: user.id, role: user.role, coordinatorId: user.coordinatorId })
         .from(user)
         .where(eq(user.id, leaderId))
         .limit(1);
@@ -555,6 +563,14 @@ export async function deactivateLeader(
           ok: false,
           code: "NOT_FOUND",
           message: "Líder não encontrado",
+        };
+      }
+
+      if (requester?.role === "coordinator" && leader.coordinatorId !== adminId) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Você só pode desativar líderes do seu coordenadoramento",
         };
       }
 
@@ -627,6 +643,7 @@ export interface Leader {
   role: string | null;
   banned: boolean;
   banReason: string | null;
+  coordinatorId: string | null;
   createdAt: Date;
   updatedAt: Date;
   invitationStatus: string | null;
@@ -652,7 +669,6 @@ export async function listLeaders(): Promise<
   }>
 > {
   try {
-    // Get all users with role "leader"
     const leaders = await db
       .select({
         id: user.id,
@@ -661,13 +677,13 @@ export async function listLeaders(): Promise<
         role: user.role,
         banned: user.banned,
         banReason: user.banReason,
+        coordinatorId: user.coordinatorId,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       })
       .from(user)
       .where(eq(user.role, "leader"));
 
-    // Get invitations for each leader
     const leaderEmails = getLeaderInvitationEmails(leaders);
     const invitations = leaderEmails.length > 0
       ? await db
@@ -676,7 +692,6 @@ export async function listLeaders(): Promise<
           .where(inArray(invitation.email, leaderEmails))
       : [];
 
-    // Map invitations to leaders
     const leadersWithInvitations = leaders.map((leader) => {
         const invitationStatus = getLeaderInvitationStatus(leader.email, invitations);
         return {
@@ -697,6 +712,355 @@ export async function listLeaders(): Promise<
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao listar líderes",
+    };
+  }
+}
+
+export async function listLeadersByCoordinator(
+  coordinatorId: string
+): Promise<
+  ActionResult<{
+    leaders: Leader[];
+    total: number;
+  }>
+> {
+  try {
+    const leaders = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        banned: user.banned,
+        banReason: user.banReason,
+        coordinatorId: user.coordinatorId,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      })
+      .from(user)
+      .where(
+        and(
+          eq(user.role, "leader"),
+          eq(user.coordinatorId, coordinatorId)
+        )
+      );
+
+    const leaderEmails = getLeaderInvitationEmails(leaders);
+    const invitations = leaderEmails.length > 0
+      ? await db
+          .select()
+          .from(invitation)
+          .where(inArray(invitation.email, leaderEmails))
+      : [];
+
+    const leadersWithInvitations = leaders.map((leader) => {
+        const invitationStatus = getLeaderInvitationStatus(leader.email, invitations);
+        return {
+          ...leader,
+          invitationStatus,
+        };
+    });
+
+    return {
+      ok: true,
+      data: {
+        leaders: leadersWithInvitations,
+        total: leadersWithInvitations.length,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao listar líderes do coordenador",
+    };
+  }
+}
+
+export interface Coordinator {
+  id: string;
+  name: string;
+  email: string;
+  role: string | null;
+  banned: boolean;
+  banReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  invitationStatus: string | null;
+}
+
+export async function listCoordinators(): Promise<
+  ActionResult<{
+    coordinators: Coordinator[];
+    total: number;
+  }>
+> {
+  try {
+    const coordinators = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        banned: user.banned,
+        banReason: user.banReason,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      })
+      .from(user)
+      .where(eq(user.role, "coordinator"));
+
+    const coordinatorEmails = coordinators.map((c) => c.email);
+    const invitations = coordinatorEmails.length > 0
+      ? await db
+          .select()
+          .from(invitation)
+          .where(inArray(invitation.email, coordinatorEmails))
+      : [];
+
+    const coordinatorsWithInvitations = coordinators.map((coordinator) => {
+        const invitationStatus = getLeaderInvitationStatus(coordinator.email, invitations);
+        return {
+          ...coordinator,
+          invitationStatus,
+        };
+    });
+
+    return {
+      ok: true,
+      data: {
+        coordinators: coordinatorsWithInvitations,
+        total: coordinatorsWithInvitations.length,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao listar coordenadores",
+    };
+  }
+}
+
+export async function inviteCoordinator(
+  input: InviteCoordinatorInput
+): Promise<ActionResult<Invitation>> {
+  try {
+    const login = getLeaderUsername(input.firstName, input.lastName);
+    const loginEmail = `${login}@prefeito.local`;
+    const defaultPassword = LEADER_DEFAULT_PASSWORD;
+
+    const [existingInvitation] = await db
+      .select()
+      .from(invitation)
+      .where(
+        and(
+          eq(invitation.email, loginEmail),
+          eq(invitation.status, InvitationStatus.PENDING)
+        )
+      )
+      .limit(1);
+
+    if (existingInvitation) {
+      return {
+        ok: true,
+        data: existingInvitation as Invitation,
+      };
+    }
+
+    const [existingUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.username, login))
+      .limit(1);
+
+    if (existingUser) {
+      if (existingUser.banReason === "pending-invite") {
+        await db
+          .update(user)
+          .set({
+            ...getLeaderProvisioningState(),
+            role: "coordinator",
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, existingUser.id));
+
+        const [newInvitation] = await db
+          .insert(invitation)
+          .values({
+            userId: existingUser.id,
+            email: loginEmail,
+            status: InvitationStatus.PENDING,
+            deliveryVersion: 1,
+            invitedBy: input.adminId,
+            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+          })
+          .returning();
+
+        return {
+          ok: true,
+          data: newInvitation as Invitation,
+        };
+      } else {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "E-mail já está em uso",
+        };
+      }
+    }
+
+    const userId = crypto.randomUUID();
+    await db.insert(user).values({
+      id: userId,
+      email: loginEmail,
+      username: login,
+      name: `${input.firstName} ${input.lastName}`,
+      role: "coordinator",
+      emailVerified: true,
+      ...getLeaderProvisioningState(),
+    });
+
+    const salt = crypto.randomBytes(16).toString("hex");
+    const key = crypto.scryptSync(defaultPassword.normalize("NFKC"), salt, 64, {
+      N: 16384,
+      r: 16,
+      p: 1,
+      maxmem: 128 * 16384 * 16 * 2,
+    });
+    const hashedPassword = `${salt}:${key.toString("hex")}`;
+
+    await db.insert(account).values({
+      id: crypto.randomUUID(),
+      accountId: userId,
+      providerId: "credential",
+      issuer: "local:credential",
+      userId: userId,
+      password: hashedPassword,
+    });
+
+    const [newInvitation] = await db
+      .insert(invitation)
+      .values({
+        userId: userId,
+        email: loginEmail,
+        status: InvitationStatus.PENDING,
+        deliveryVersion: 1,
+        invitedBy: input.adminId,
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      })
+      .returning();
+
+    return {
+      ok: true,
+      data: newInvitation as Invitation,
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao criar convite de coordenador",
+    };
+  }
+}
+
+export async function deactivateCoordinator(
+  coordinatorId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem desativar coordenadores",
+        };
+      }
+
+      const [coordinator] = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .where(eq(user.id, coordinatorId))
+        .limit(1);
+
+      if (!coordinator || coordinator.role !== "coordinator") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Coordenador não encontrado",
+        };
+      }
+
+      await tx.execute(sql`
+        SELECT c."id"
+        FROM "campaign" c
+        INNER JOIN "campaign_leader" cl ON cl."campaignId" = c."id"
+        INNER JOIN "user" u ON u."id" = cl."leaderId"
+        WHERE u."coordinatorId" = ${coordinatorId}
+        ORDER BY c."id"
+        FOR UPDATE OF c
+      `);
+
+      await tx.execute(sql`
+        SELECT cl."id"
+        FROM "campaign_leader" cl
+        INNER JOIN "user" u ON u."id" = cl."leaderId"
+        WHERE u."coordinatorId" = ${coordinatorId}
+        ORDER BY cl."campaignId", cl."id"
+        FOR UPDATE OF cl
+      `);
+
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        WHERE u."id" = ${coordinatorId}
+        FOR UPDATE OF u
+      `);
+
+      await tx
+        .update(invitation)
+        .set({ status: InvitationStatus.REVOKED, revokedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(invitation.userId, coordinatorId),
+            eq(invitation.status, InvitationStatus.PENDING)
+          )
+        );
+
+      await tx.execute(sql`
+        UPDATE "campaign_leader" cl
+        SET "active" = false, "updatedAt" = now()
+        FROM "user" u
+        WHERE cl."leaderId" = u."id"
+          AND u."coordinatorId" = ${coordinatorId}
+      `);
+
+      await tx
+        .update(user)
+        .set({
+          banned: true,
+          banReason: "deactivated",
+          banExpires: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, coordinatorId));
+
+      await tx.delete(session).where(eq(session.userId, coordinatorId));
+
+      return { ok: true, data: { id: coordinatorId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao desativar coordenador",
     };
   }
 }

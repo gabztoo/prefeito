@@ -24,12 +24,19 @@ export const user = pgTable("user", {
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
   role: text("role"),
+  coordinatorId: text("coordinatorId"),
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-});
+}, (table) => ({
+  userCoordinatorIdIdx: index("user_coordinatorId_idx").on(table.coordinatorId),
+  userCoordinatorIdForeignKey: foreignKey({
+    columns: [table.coordinatorId],
+    foreignColumns: [table.id],
+  }).onDelete("set null"),
+}));
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),

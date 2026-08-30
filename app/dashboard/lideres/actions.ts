@@ -28,11 +28,11 @@ export async function inviteLeaderAction(data: {
     };
   }
 
-  if (result.user?.role !== "admin") {
+  if (result.user?.role !== "admin" && result.user?.role !== "coordinator") {
     return {
       ok: false,
       code: "FORBIDDEN",
-      message: "Apenas administradores podem convidar líderes",
+      message: "Apenas administradores ou coordenadores podem convidar líderes",
     };
   }
 
@@ -40,6 +40,7 @@ export async function inviteLeaderAction(data: {
     firstName: data.firstName,
     lastName: data.lastName,
     adminId: result.session.userId,
+    coordinatorId: result.user?.role === "coordinator" ? result.session.userId : undefined,
   });
 
   if (!invitationResult.ok) {
@@ -107,11 +108,11 @@ export async function deactivateLeaderAction(
     };
   }
 
-  if (result.user?.role !== "admin") {
+  if (result.user?.role !== "admin" && result.user?.role !== "coordinator") {
     return {
       ok: false,
       code: "FORBIDDEN",
-      message: "Apenas administradores podem desativar líderes",
+      message: "Apenas administradores ou coordenadores podem desativar líderes",
     };
   }
 
