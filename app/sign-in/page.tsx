@@ -31,8 +31,8 @@ export default function SignIn() {
     try {
       const isEmail = login.includes("@");
       const result = isEmail
-        ? await signIn.email({ email: login, password, callbackURL: "/dashboard" })
-        : await signIn.username({ username: login, password, callbackURL: "/dashboard" });
+        ? await signIn.email({ email: login, password })
+        : await signIn.username({ username: login, password });
 
       if (result?.error) {
         setError("Credenciais inválidas. Verifique seu usuário e senha.");
