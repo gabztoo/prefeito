@@ -4,7 +4,6 @@ import UserProfile from "@/components/user-profile";
 import clsx from "clsx";
 import {
   HomeIcon,
-  Vote,
   Users,
   UserCheck,
   Shield,
@@ -29,9 +28,10 @@ const navItems: NavItem[] = [
     icon: HomeIcon,
   },
   {
-    label: "Campanhas",
-    href: "/dashboard/campanhas",
-    icon: Vote,
+    label: "Coordenadores",
+    href: "/dashboard/coordenadores",
+    icon: Shield,
+    adminOnly: true,
   },
   {
     label: "Líderes",
@@ -39,12 +39,6 @@ const navItems: NavItem[] = [
     icon: UserCheck,
     adminOnly: true,
     coordinatorOnly: true,
-  },
-  {
-    label: "Coordenadores",
-    href: "/dashboard/coordenadores",
-    icon: Shield,
-    adminOnly: true,
   },
   {
     label: "Eleitores",

@@ -16,7 +16,6 @@ import {
   Settings,
   UserCheck,
   Users,
-  Vote,
   Menu,
   Shield,
 } from "lucide-react";
@@ -40,9 +39,8 @@ interface DashboardTopNavProps {
 
 const navItems: NavItem[] = [
   { label: "Visão Geral", href: "/dashboard", icon: HomeIcon },
-  { label: "Campanhas", href: "/dashboard/campanhas", icon: Vote },
-  { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true, coordinatorOnly: true },
   { label: "Coordenadores", href: "/dashboard/coordenadores", icon: Shield, adminOnly: true },
+  { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true, coordinatorOnly: true },
   { label: "Eleitores", href: "/dashboard/eleitores", icon: Users },
   { label: "Configurações", href: "/dashboard/settings", icon: Settings },
 ];
