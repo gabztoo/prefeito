@@ -31,11 +31,11 @@ export async function changeInitialPassword(
     };
   }
 
-  if (session.user?.role !== "leader") {
+  if (session.user?.role !== "leader" && session.user?.role !== "coordinator") {
     return {
       ok: false,
       code: "FORBIDDEN",
-      message: "Apenas líderes precisam alterar a senha inicial.",
+      message: "Apenas líderes ou coordenadores precisam alterar a senha inicial.",
     };
   }
 
