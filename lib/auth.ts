@@ -151,7 +151,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
-    minPasswordLength: 12,
+    minPasswordLength: 6,
     maxPasswordLength: 128,
     resetPasswordTokenExpiresIn: 172800,
     sendResetPassword: sendResetPasswordEmail,
