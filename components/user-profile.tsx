@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import clsx from "clsx";
 
 interface UserInfo {
   id: string;
@@ -25,7 +26,7 @@ interface UserInfo {
   updatedAt: Date;
 }
 
-export default function UserProfile({ mini }: { mini?: boolean }) {
+export default function UserProfile({ mini, sidebar }: { mini?: boolean; sidebar?: boolean }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +85,7 @@ export default function UserProfile({ mini }: { mini?: boolean }) {
         <div
           className={`flex gap-2 justify-start items-center w-full rounded ${mini ? "" : "px-4 pt-2 pb-3"}`}
         >
-          <Avatar>
+          <Avatar className={sidebar ? "bg-white/20 text-white" : ""}>
             {loading ? (
               <div className="flex items-center justify-center w-full h-full">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -94,7 +95,7 @@ export default function UserProfile({ mini }: { mini?: boolean }) {
                 {userInfo?.image ? (
                   <AvatarImage src={userInfo?.image} alt="User Avatar" />
                 ) : (
-                  <AvatarFallback>
+                  <AvatarFallback className={sidebar ? "bg-white/20 text-white" : ""}>
                     {userInfo?.name && userInfo.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
@@ -103,7 +104,7 @@ export default function UserProfile({ mini }: { mini?: boolean }) {
           </Avatar>
           {mini ? null : (
             <div className="flex items-center gap-2">
-              <p className="font-medium text-md">
+              <p className={clsx("font-medium text-md", sidebar ? "text-white" : "")}>
                 {loading ? "Loading..." : userInfo?.name || "User"}
               </p>
               {loading && <Loader2 className="h-3 w-3 animate-spin" />}

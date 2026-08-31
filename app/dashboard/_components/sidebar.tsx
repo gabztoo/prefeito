@@ -13,6 +13,25 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
 interface NavItem {
   label: string;
   href: string;
@@ -88,7 +107,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                   )}
                 >
                   <item.icon
-                    className="h-5 w-5"
+                    className={clsx("h-5 w-5", isActive && "text-[#06b6d4]")}
                     aria-hidden="true"
                     {...(isActive ? { fill: "currentColor" } : {})}
                   />
@@ -98,7 +117,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             })}
           </div>
 
-          <div className="flex flex-col gap-1 w-full pb-[140px]">
+          <div className="flex flex-col gap-1 w-full pb-4">
             <div className="px-4">
               <Link
                 href="/dashboard/settings"
@@ -111,14 +130,39 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 )}
               >
                 <Settings
-                  className="h-5 w-5"
+                  className={clsx("h-5 w-5", pathname === "/dashboard/settings" && "text-[#06b6d4]")}
                   aria-hidden="true"
                   {...(pathname === "/dashboard/settings" ? { fill: "currentColor" } : {})}
                 />
                 Configurações
               </Link>
             </div>
-            <UserProfile />
+            <div className="px-4">
+              <UserProfile sidebar />
+            </div>
+            <div className="px-4 pt-2">
+              <p className="text-[11px] text-white/40 text-center mb-1">Desenvolvido por</p>
+              <div className="flex items-center justify-center gap-3">
+                <a
+                  href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white flex items-center gap-1 text-[11px] duration-150"
+                >
+                  <InstagramIcon className="h-3 w-3" />
+                  <span>sugiiartz</span>
+                </a>
+                <a
+                  href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white flex items-center gap-1 text-[11px] duration-150"
+                >
+                  <InstagramIcon className="h-3 w-3" />
+                  <span>macae092</span>
+                </a>
+              </div>
+            </div>
           </div>
         </nav>
       </div>
