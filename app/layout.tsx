@@ -6,11 +6,11 @@ import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "Hermes Sistema Eleitoral",
   description:
-    "Hermes - Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
+    "Hermes - Sistema para cadastrar eleitores por links individuais de líderes.",
   openGraph: {
     title: "Hermes Sistema Eleitoral",
     description:
-      "Hermes - Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
+      "Hermes - Sistema para cadastrar eleitores por links individuais de líderes.",
     url: "",
     siteName: "Hermes Sistema Eleitoral",
     images: [],

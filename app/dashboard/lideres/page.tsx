@@ -64,7 +64,7 @@ export default async function LideresPage() {
           <p className="text-muted-foreground">
             {result.user?.role === "coordinator"
               ? "Gerencie os líderes do seu coordenadoramento"
-              : "Gerencie os líderes das campanhas"}
+              : "Gerencie os líderes do sistema"}
           </p>
         </div>
         <div className="mt-4 flex justify-between items-center">

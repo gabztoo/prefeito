@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VotersTable } from "./voters-table";
 import { VotersFilters } from "./voters-filters";
 import { VotersPagination } from "./voters-pagination";
-import { listCampaignsAction } from "../campanhas/actions";
 
 interface SearchParams {
-  campaignId?: string;
   leaderId?: string;
   zone?: string;
   section?: string;
@@ -34,7 +32,6 @@ export default async function EleitoresPage({ searchParams }: Props) {
   const page = parseInt(params.page || "1", 10);
 
   const filters = {
-    campaignId: params.campaignId,
     leaderId: params.leaderId,
     zone: params.zone,
     section: params.section,
@@ -43,10 +40,9 @@ export default async function EleitoresPage({ searchParams }: Props) {
     limit: 25,
   };
 
-  const [votersResult, statsResult, campaignsResult] = await Promise.all([
+  const [votersResult, statsResult] = await Promise.all([
     listVotersAction(filters),
     getVoterStatsAction(),
-    result.user?.role === "admin" ? listCampaignsAction() : Promise.resolve({ ok: true, data: { campaigns: [], total: 0 } }),
   ]);
 
   const isAdmin = result.user?.role === "admin";
@@ -64,7 +60,7 @@ export default async function EleitoresPage({ searchParams }: Props) {
         </div>
 
         {statsResult.ok && (
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
@@ -77,24 +73,10 @@ export default async function EleitoresPage({ searchParams }: Props) {
                 </div>
               </CardContent>
             </Card>
-            {statsResult.data.byCampaign.slice(0, 3).map((c) => (
-              <Card key={c.campaignId}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-                    {c.campaignName}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl sm:text-2xl font-bold">
-                    {c.total.toLocaleString("pt-BR")}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         )}
 
-        <VotersFilters isAdmin={isAdmin} campaignsResult={campaignsResult} />
+        <VotersFilters />
 
         {votersResult.ok ? (
           <>

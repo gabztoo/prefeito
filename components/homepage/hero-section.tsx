@@ -10,8 +10,7 @@ export default function HeroSection() {
             Hermes Sistema Eleitoral
           </h1>
           <p className="text-muted-foreground mx-auto mb-6 mt-4 text-balance text-xl">
-            Sistema para campanhas eleitorais cadastrarem eleitores por links
-            individuais de líderes.
+            Sistema para cadastrar eleitores por links individuais de líderes.
           </p>
           <div className="flex flex-col items-center gap-2 *:w-full sm:flex-row sm:justify-center sm:*:w-auto">
             <Button asChild variant="default" size="sm">

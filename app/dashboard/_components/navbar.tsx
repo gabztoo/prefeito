@@ -13,7 +13,6 @@ import {
 import UserProfile from "@/components/user-profile";
 import {
   HomeIcon,
-  Vote,
   Settings,
   UserCheck,
   Users,
@@ -43,7 +42,6 @@ const navItems: NavItem[] = [
   { label: "Coordenadores", href: "/dashboard/coordenadores", icon: Shield, adminOnly: true },
   { label: "Líderes", href: "/dashboard/lideres", icon: UserCheck, adminOnly: true, coordinatorOnly: true },
   { label: "Eleitores", href: "/dashboard/eleitores", icon: Users },
-  { label: "Campanhas", href: "/dashboard/campanhas", icon: Vote },
   { label: "Configurações", href: "/dashboard/settings", icon: Settings },
 ];
 

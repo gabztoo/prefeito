@@ -6,20 +6,14 @@ import {
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
-  FilePlus2,
-  FileText,
   MailWarning,
-  Megaphone,
   UserPlus,
   Users,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CampaignStatus } from "@/lib/services/campaign";
 import {
   getDashboardStats,
-  type DashboardCampaign,
   type DashboardStats,
 } from "@/lib/services/dashboard";
 
@@ -37,126 +31,6 @@ function formatCountLabel(
     : `${formatNumber(value)} ${plural}`;
 }
 
-function formatDate(value: Date | null) {
-  if (!value) return "Ainda não";
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-  }).format(new Date(value));
-}
-
-function getCampaignStatus(status: CampaignStatus) {
-  switch (status) {
-    case CampaignStatus.OPEN:
-      return { label: "Aberta", className: "border-emerald-200 bg-emerald-50 text-emerald-700" };
-    case CampaignStatus.CLOSED:
-      return { label: "Encerrada", className: "border-slate-200 bg-slate-100 text-slate-600" };
-    default:
-      return { label: "Rascunho", className: "border-amber-200 bg-amber-50 text-amber-700" };
-  }
-}
-
-function CampaignRow({ campaign }: { campaign: DashboardCampaign }) {
-  const status = getCampaignStatus(campaign.status);
-
-  return (
-    <Link
-      href={`/dashboard/campanhas/${campaign.id}`}
-      className="group block border-t px-6 py-4 transition-[background-color] hover:bg-muted/40 focus-visible:bg-muted/40"
-      aria-label={`Gerenciar campanha ${campaign.name}`}
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-semibold group-hover:text-primary">
-              {campaign.name}
-            </h3>
-            <Badge className={status.className}>{status.label}</Badge>
-          </div>
-          <p className="mt-1 truncate text-sm text-muted-foreground">
-            /{campaign.slug}
-          </p>
-        </div>
-        <ArrowUpRight
-          className="hidden h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:block"
-          aria-hidden="true"
-        />
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-3 border-t pt-3 text-sm">
-        <div>
-          <p className="font-semibold tabular-nums">{formatNumber(campaign.voterCount)}</p>
-          <p className="text-xs text-muted-foreground">Eleitores</p>
-        </div>
-        <div>
-          <p className="font-semibold tabular-nums">{formatNumber(campaign.leaderCount)}</p>
-          <p className="text-xs text-muted-foreground">Líderes</p>
-        </div>
-        <div>
-          <p className="font-semibold">{formatDate(campaign.lastVoterAt)}</p>
-          <p className="text-xs text-muted-foreground">Último cadastro</p>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function CampaignDistribution({ campaigns }: { campaigns: DashboardCampaign[] }) {
-  const maxVoterCount = Math.max(...campaigns.map((campaign) => campaign.voterCount), 1);
-
-  return (
-    <Card className="gap-0 overflow-hidden">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 border-b pb-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-            Distribuição
-          </p>
-          <h2 className="mt-2 text-lg font-semibold">Cadastros por campanha</h2>
-        </div>
-        <BarChart3 className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-      </CardHeader>
-      <CardContent className="space-y-5 pt-5">
-        {campaigns.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Crie uma campanha para acompanhar os cadastros aqui.
-          </p>
-        ) : (
-          campaigns.map((campaign) => {
-            const width = Math.max(
-              (campaign.voterCount / maxVoterCount) * 100,
-              campaign.voterCount > 0 ? 4 : 0
-            );
-
-            return (
-              <div key={campaign.id}>
-                <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                  <span className="min-w-0 truncate font-medium">{campaign.name}</span>
-                  <span className="shrink-0 tabular-nums text-muted-foreground">
-                    {formatNumber(campaign.voterCount)}
-                  </span>
-                </div>
-                <div
-                  className="h-2 overflow-hidden rounded-full bg-muted"
-                  role="progressbar"
-                  aria-label={`Cadastros em ${campaign.name}`}
-                  aria-valuenow={campaign.voterCount}
-                  aria-valuemin={0}
-                  aria-valuemax={maxVoterCount}
-                >
-                  <div
-                    className="h-full rounded-full bg-primary transition-[width] duration-500"
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function AttentionPanel({ stats }: { stats: DashboardStats }) {
   const attentionItems = [
     stats.pendingInvitations > 0 && {
@@ -164,22 +38,6 @@ function AttentionPanel({ stats }: { stats: DashboardStats }) {
       icon: MailWarning,
       title: formatCountLabel(stats.pendingInvitations, "convite pendente", "convites pendentes"),
       description: "Aguardando aceite do líder",
-    },
-    stats.draftCampaigns > 0 && {
-      href: "/dashboard/campanhas",
-      icon: FileText,
-      title: formatCountLabel(stats.draftCampaigns, "campanha em rascunho", "campanhas em rascunho"),
-      description: "Pronta para ser configurada",
-    },
-    stats.campaignsWithoutLeaders > 0 && {
-      href: "/dashboard/campanhas",
-      icon: Users,
-      title: formatCountLabel(
-        stats.campaignsWithoutLeaders,
-        "campanha sem líder",
-        "campanhas sem líder"
-      ),
-      description: "Abra a campanha para gerar um link",
     },
   ].filter(Boolean) as Array<{
     href: string;
@@ -196,7 +54,7 @@ function AttentionPanel({ stats }: { stats: DashboardStats }) {
         </p>
         <h2 className="mt-2 text-lg font-semibold">Atenção necessária</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Itens que podem bloquear o andamento das campanhas.
+          Itens que precisam da sua atenção.
         </p>
       </CardHeader>
       <CardContent className="p-0">
@@ -265,17 +123,10 @@ export default async function Dashboard() {
       icon: BarChart3,
     },
     {
-      label: "Campanhas ativas",
-      value: stats?.activeCampaigns,
-      description: "Abertas para cadastro",
-      href: "/dashboard/campanhas",
-      icon: Megaphone,
-    },
-    {
       label: isAdmin ? "Líderes ativos" : isCoordinator ? "Meus líderes" : "Links ativos",
       value: isAdmin || isCoordinator ? stats?.activeLeaders : stats?.activeLinks,
       description: isAdmin || isCoordinator ? "Com acesso ativo" : "Disponíveis para cadastro",
-      href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/campanhas",
+      href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/eleitores",
       icon: UserPlus,
     },
   ];
@@ -295,46 +146,26 @@ export default async function Dashboard() {
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
                 {isAdmin
-                  ? "Acompanhe o andamento das campanhas e mantenha os próximos passos sob controle."
+                  ? "Acompanhe os cadastros e mantenha os próximos passos sob controle."
                   : isCoordinator
-                  ? "Acompanhe seus líderes, campanhas e cadastros do seu coordenadoramento."
-                  : "Acompanhe suas campanhas e os cadastros recebidos pelos seus links."}
+                  ? "Acompanhe seus líderes e cadastros do seu coordenadoramento."
+                  : "Acompanhe os cadastros recebidos pelos seus links."}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               {isAdmin ? (
-                <>
-                  <Button asChild>
-                    <Link href="/dashboard/campanhas/nova">
-                      <FilePlus2 aria-hidden="true" /> Nova campanha
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link href="/dashboard/lideres/novo">
-                      <UserPlus aria-hidden="true" /> Convidar líder
-                    </Link>
-                  </Button>
-                </>
-              ) : isCoordinator ? (
-                <>
-                  <Button asChild>
-                    <Link href="/dashboard/lideres/novo">
-                      <UserPlus aria-hidden="true" /> Convidar líder
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link href="/dashboard/campanhas">
-                      <ArrowUpRight aria-hidden="true" /> Ver campanhas
-                    </Link>
-                  </Button>
-                </>
-              ) : (
                 <Button asChild>
-                  <Link href="/dashboard/campanhas">
-                    <ArrowUpRight aria-hidden="true" /> Ver meus links
+                  <Link href="/dashboard/lideres/novo">
+                    <UserPlus aria-hidden="true" /> Convidar líder
                   </Link>
                 </Button>
-              )}
+              ) : isCoordinator ? (
+                <Button asChild>
+                  <Link href="/dashboard/lideres/novo">
+                    <UserPlus aria-hidden="true" /> Convidar líder
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </div>
         </header>
@@ -348,7 +179,7 @@ export default async function Dashboard() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {metrics.map(({ label, value, description, href, icon: Icon }) => (
             <Link
               key={label}
@@ -374,53 +205,7 @@ export default async function Dashboard() {
           ))}
         </div>
 
-            {stats && (
-            <>
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)]">
-              <Card className="gap-0 overflow-hidden">
-                <CardHeader className="flex flex-row items-end justify-between gap-4 border-b pb-5">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                      Acompanhamento
-                    </p>
-                    <h2 className="mt-2 text-lg font-semibold">Campanhas recentes</h2>
-                  </div>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href="/dashboard/campanhas">
-                      Ver todas <ArrowUpRight aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {stats.campaigns.length === 0 ? (
-                    <div className="flex flex-col items-start gap-4 p-6">
-                      <div>
-                        <h3 className="font-medium">Nenhuma campanha ainda</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {isAdmin
-                            ? "Crie sua primeira campanha para começar a receber cadastros."
-                            : "Aguarde campanhas serem criadas e vinculadas aos seus líderes."}
-                        </p>
-                      </div>
-                      {isAdmin && (
-                        <Button asChild size="sm">
-                          <Link href="/dashboard/campanhas/nova">Criar campanha</Link>
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    stats.campaigns.map((campaign) => (
-                      <CampaignRow key={campaign.id} campaign={campaign} />
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-              {(isAdmin || isCoordinator) && <AttentionPanel stats={stats} />}
-            </div>
-
-            <CampaignDistribution campaigns={stats.campaigns} />
-          </>
-        )}
+        {(isAdmin || isCoordinator) && stats && <AttentionPanel stats={stats} />}
       </div>
     </section>
   );
