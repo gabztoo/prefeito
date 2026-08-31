@@ -7,6 +7,8 @@ import {
   session,
   campaign_leader,
   voter,
+  audit_event,
+  registration_token,
 } from "@/db/schema";
 import { eq, and, gt, inArray, sql, count, or } from "drizzle-orm";
 import { aliasedTable } from "drizzle-orm";
@@ -1494,16 +1496,21 @@ export async function deleteCoordinator(
         .where(eq(user.coordinatorId, coordinatorId))
         .then((rows) => rows.map((r) => r.id));
 
+      const allUserIds = [coordinatorId, ...leaderIds];
+
       if (leaderIds.length > 0) {
         await tx
           .delete(voter)
           .where(
-            inArray(
-              voter.campaignLeaderId,
-              tx
-                .select({ id: campaign_leader.id })
-                .from(campaign_leader)
-                .where(inArray(campaign_leader.leaderId, leaderIds))
+            or(
+              inArray(
+                voter.campaignLeaderId,
+                tx
+                  .select({ id: campaign_leader.id })
+                  .from(campaign_leader)
+                  .where(inArray(campaign_leader.leaderId, leaderIds))
+              ),
+              inArray(voter.leaderId, leaderIds)
             )
           );
 
@@ -1513,6 +1520,19 @@ export async function deleteCoordinator(
 
         await tx.delete(user).where(inArray(user.id, leaderIds));
       }
+
+      await tx
+        .delete(audit_event)
+        .where(inArray(audit_event.actorId, allUserIds));
+
+      await tx
+        .delete(registration_token)
+        .where(
+          or(
+            inArray(registration_token.invitedBy, allUserIds),
+            eq(registration_token.coordinatorId, coordinatorId)
+          )
+        );
 
       await tx
         .delete(session)
@@ -1592,8 +1612,25 @@ export async function deleteLeader(
       }
 
       await tx
+        .delete(voter)
+        .where(eq(voter.leaderId, leaderId));
+
+      await tx
         .delete(campaign_leader)
         .where(eq(campaign_leader.leaderId, leaderId));
+
+      await tx
+        .delete(audit_event)
+        .where(eq(audit_event.actorId, leaderId));
+
+      await tx
+        .delete(registration_token)
+        .where(
+          or(
+            eq(registration_token.invitedBy, leaderId),
+            eq(registration_token.leaderId, leaderId)
+          )
+        );
 
       await tx
         .delete(session)

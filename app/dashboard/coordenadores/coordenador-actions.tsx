@@ -74,7 +74,7 @@ export function CoordenadorActions({
         variant="destructive"
         size="sm"
         onClick={deleteCoordinator}
-        disabled={disabled || isPending}
+        disabled={isPending}
         title="Excluir permanentemente"
       >
         <TrashIcon className="h-4 w-4" />

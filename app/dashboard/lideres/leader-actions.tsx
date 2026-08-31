@@ -73,7 +73,7 @@ export function LeaderActions({
           variant="destructive"
           size="sm"
           onClick={deleteLeaderFn}
-          disabled={disabled || isPending}
+          disabled={isPending}
           title="Excluir permanentemente"
         >
           <TrashIcon className="h-4 w-4" />
