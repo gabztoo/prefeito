@@ -83,7 +83,10 @@ export default function UserProfile({ mini, sidebar }: { mini?: boolean; sidebar
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div
-          className={`flex gap-2 justify-start items-center w-full rounded ${mini ? "" : "px-4 pt-2 pb-3"}`}
+          className={clsx(
+            "flex gap-2 justify-start items-center w-full rounded cursor-pointer",
+            sidebar ? "px-3 py-2.5" : mini ? "" : "px-4 pt-2 pb-3"
+          )}
         >
           <Avatar className={sidebar ? "bg-white/20 text-white" : ""}>
             {loading ? (

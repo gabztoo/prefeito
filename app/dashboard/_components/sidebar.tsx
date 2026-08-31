@@ -117,7 +117,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             })}
           </div>
 
-          <div className="flex flex-col gap-1 w-full pb-[200px]">
+          <div className="flex flex-col gap-1 w-full pb-[160px]">
             <div className="px-4">
               <Link
                 href="/dashboard/settings"
@@ -137,9 +137,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 Configurações
               </Link>
             </div>
-            <div className="px-4">
-              <UserProfile sidebar />
-            </div>
+            <UserProfile sidebar />
             <div className="px-4 pt-2">
               <p className="text-[11px] text-white/40 text-center mb-1">Desenvolvido por</p>
               <div className="flex items-center justify-center gap-3">
