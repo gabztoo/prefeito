@@ -751,3 +751,63 @@ export async function deleteVoter(
     data: { id: voterId },
   };
 }
+
+export interface CreateVoterInput {
+  name: string;
+  phone: string;
+  zone: string;
+  section: string;
+  voterTitle?: string;
+  cep?: string;
+}
+
+export async function createVoter(
+  userId: string,
+  role: string,
+  input: CreateVoterInput
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const cleanPhone = input.phone.replace(/\D/g, "");
+    if (cleanPhone.length !== 11) {
+      return {
+        ok: false,
+        code: "VALIDATION_ERROR",
+        message: "Telefone deve conter 11 dígitos",
+      };
+    }
+
+    const [existingVoter] = await db
+      .select()
+      .from(voter)
+      .where(eq(voter.phone, cleanPhone))
+      .limit(1);
+
+    if (existingVoter) {
+      return {
+        ok: false,
+        code: "DUPLICATE_PHONE",
+        message: "Este telefone já está cadastrado",
+      };
+    }
+
+    const voterId = crypto.randomUUID();
+
+    await db.insert(voter).values({
+      id: voterId,
+      leaderId: userId,
+      name: input.name,
+      phone: cleanPhone,
+      zone: input.zone,
+      section: input.section,
+      voterTitle: input.voterTitle || null,
+    });
+
+    return { ok: true, data: { id: voterId } };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao cadastrar eleitor",
+    };
+  }
+}

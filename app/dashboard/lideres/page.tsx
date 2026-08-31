@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { LeaderActions } from "./leader-actions";
 import { GenerateLinkDialog } from "./generate-link-dialog";
-import { GenerateVoterLinkDialog } from "../_components/generate-voter-link-dialog";
-import { generateLeaderLinkAction, generateVoterLinkAction } from "./actions";
+import { generateLeaderLinkAction } from "./actions";
 
 export default async function LideresPage() {
   const result = await auth.api.getSession({
@@ -74,7 +73,7 @@ export default async function LideresPage() {
           <div className="flex gap-2">
             <GenerateLinkDialog onGenerate={generateLeaderLinkAction} />
             <Link href="/dashboard/lideres/novo">
-              <Button>Novo Convite</Button>
+              <Button>Cadastrar</Button>
             </Link>
           </div>
         </div>
@@ -209,8 +208,7 @@ export default async function LideresPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center mt-4 pt-3 border-t">
-                    <GenerateVoterLinkDialog onGenerate={generateVoterLinkAction} />
+                  <div className="flex justify-end mt-4 pt-3 border-t">
                     <LeaderActions leaderId={leader.id} disabled={leader.banned} isAdmin={result.user?.role === "admin"} />
                   </div>
                 </CardContent>

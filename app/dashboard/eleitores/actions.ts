@@ -8,6 +8,7 @@ import {
   editVoter,
   deleteVoter,
 } from "@/lib/services/voter";
+import { generateVoterRegistrationLink } from "@/lib/services/registration";
 import { ActionResult } from "@/lib/types";
 import { logAuditEvent } from "@/lib/services/audit";
 
@@ -159,4 +160,34 @@ export async function deleteVoterAction(
   }
 
   return deleteResult;
+}
+
+export async function generateVoterLinkAction(): Promise<
+  ActionResult<{ token: string; url: string }>
+> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para gerar links",
+    };
+  }
+
+  if (
+    result.user?.role !== "admin" &&
+    result.user?.role !== "coordinator" &&
+    result.user?.role !== "leader"
+  ) {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores, coordenadores ou líderes podem gerar links de eleitor",
+    };
+  }
+
+  return generateVoterRegistrationLink(result.session.userId);
 }

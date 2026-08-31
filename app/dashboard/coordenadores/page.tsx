@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { CoordenadorActions } from "./coordenador-actions";
 import { GenerateLinkDialog } from "./generate-link-dialog";
-import { GenerateVoterLinkDialog } from "../_components/generate-voter-link-dialog";
-import { generateCoordinatorLinkAction, generateVoterLinkAction } from "./actions";
+import { generateCoordinatorLinkAction } from "./actions";
 
 export default async function CoordenadoresPage() {
   const result = await auth.api.getSession({
@@ -78,7 +77,7 @@ export default async function CoordenadoresPage() {
           <div className="flex gap-2">
             <GenerateLinkDialog onGenerate={generateCoordinatorLinkAction} />
             <Link href="/dashboard/coordenadores/novo">
-              <Button>Novo Convite</Button>
+              <Button>Cadastrar</Button>
             </Link>
           </div>
         </div>
@@ -241,8 +240,7 @@ export default async function CoordenadoresPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center mt-4 pt-3 border-t">
-                    <GenerateVoterLinkDialog onGenerate={generateVoterLinkAction} />
+                  <div className="flex justify-end mt-4 pt-3 border-t">
                     <CoordenadorActions
                       coordinatorId={coordinator.id}
                       disabled={coordinator.banned}

@@ -1,11 +1,14 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { listVotersAction, getVoterStatsAction } from "./actions";
+import { listVotersAction, getVoterStatsAction, generateVoterLinkAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { VotersTable } from "./voters-table";
 import { VotersFilters } from "./voters-filters";
 import { VotersPagination } from "./voters-pagination";
+import { GenerateLinkDialog } from "../lideres/generate-link-dialog";
 
 interface SearchParams {
   leaderId?: string;
@@ -58,6 +61,19 @@ export default async function EleitoresPage({ searchParams }: Props) {
               : "Veja seus eleitores cadastrados"}
           </p>
         </div>
+        <div className="mt-4 flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            {votersResult.ok
+              ? `${votersResult.data.totalFiltered.toLocaleString("pt-BR")} eleitor${votersResult.data.totalFiltered !== 1 ? "es" : ""} encontrado${votersResult.data.totalFiltered !== 1 ? "s" : ""}`
+              : ""}
+          </p>
+          <div className="flex gap-2">
+            <GenerateLinkDialog onGenerate={generateVoterLinkAction} />
+            <Link href="/dashboard/eleitores/novo">
+              <Button>Cadastrar</Button>
+            </Link>
+          </div>
+        </div>
 
         {statsResult.ok && (
           <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
@@ -80,14 +96,6 @@ export default async function EleitoresPage({ searchParams }: Props) {
 
         {votersResult.ok ? (
           <>
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {votersResult.data.totalFiltered.toLocaleString("pt-BR")} eleitor
-                {votersResult.data.totalFiltered !== 1 ? "es" : ""} encontrado
-                {votersResult.data.totalFiltered !== 1 ? "s" : ""}
-              </p>
-            </div>
-
             {votersResult.data.voters.length === 0 ? (
               <Card className="mt-4">
                 <CardContent className="pt-6">
