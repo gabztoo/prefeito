@@ -154,13 +154,13 @@ export default async function Dashboard() {
             </div>
             <div className="flex flex-wrap gap-3">
               {isAdmin ? (
-                <Button asChild>
+                <Button asChild className="bg-[#f59e0b] hover:bg-[#d97706] text-white">
                   <Link href="/dashboard/lideres/novo">
                     <UserPlus aria-hidden="true" /> Convidar líder
                   </Link>
                 </Button>
               ) : isCoordinator ? (
-                <Button asChild>
+                <Button asChild className="bg-[#f59e0b] hover:bg-[#d97706] text-white">
                   <Link href="/dashboard/lideres/novo">
                     <UserPlus aria-hidden="true" /> Convidar líder
                   </Link>
@@ -180,29 +180,32 @@ export default async function Dashboard() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {metrics.map(({ label, value, description, href, icon: Icon }) => (
-            <Link
-              key={label}
-              href={href}
-              className="group rounded-xl border bg-card p-5 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:border-primary"
-              aria-label={`${label}: ${value === undefined ? "indisponível" : formatNumber(value)}`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <ArrowUpRight
-                  className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </div>
-              <p className="mt-6 text-sm font-medium text-muted-foreground">{label}</p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
-                {value === undefined ? "-" : formatNumber(value)}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">{description}</p>
-            </Link>
-          ))}
+          {metrics.map(({ label, value, description, href, icon: Icon }, index) => {
+            const borderColors = ["border-b-[#1e40af]", "border-b-[#06b6d4]", "border-b-[#f59e0b]"];
+            return (
+              <Link
+                key={label}
+                href={href}
+                className={`group rounded-xl border bg-card p-5 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:border-primary border-b-4 ${borderColors[index % 3]}`}
+                aria-label={`${label}: ${value === undefined ? "indisponível" : formatNumber(value)}`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <ArrowUpRight
+                    className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="mt-6 text-sm font-medium text-muted-foreground">{label}</p>
+                <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
+                  {value === undefined ? "-" : formatNumber(value)}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">{description}</p>
+              </Link>
+            );
+          })}
         </div>
 
         {(isAdmin || isCoordinator) && stats && <AttentionPanel stats={stats} />}

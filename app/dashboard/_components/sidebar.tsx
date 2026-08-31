@@ -64,15 +64,15 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   );
 
   return (
-    <div className="min-[1024px]:block hidden w-64 h-full relative overflow-hidden">
+    <div className="min-[1024px]:block hidden w-[280px] h-full relative overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/sidebar.jpeg')" }}
       />
-      <div className="absolute inset-0 bg-[#1a3a8a]/30" />
+      <div className="absolute inset-0 bg-[#1a3a8a]/10" />
       <div className="relative flex h-full flex-col z-10">
         <nav className="flex flex-col h-full justify-between items-start w-full">
-          <div className="w-full space-y-1 p-4 pt-6">
+          <div className="w-full space-y-1 px-4 pt-[260px]">
             {filteredNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -91,7 +91,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             ))}
           </div>
 
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-1 w-full pb-4">
             <div className="px-4">
               <Link
                 href="/dashboard/settings"
@@ -108,37 +108,6 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
               </Link>
             </div>
             <UserProfile />
-            <div className="px-4 pb-4">
-              <p className="text-xs text-white/50 text-center mb-2">Desenvolvido por</p>
-              <div className="flex items-center justify-center gap-4">
-                <a
-                  href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-white flex items-center gap-1 text-xs duration-150"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                  </svg>
-                  <span>sugiiartz</span>
-                </a>
-                <a
-                  href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-white flex items-center gap-1 text-xs duration-150"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                  </svg>
-                  <span>macae092</span>
-                </a>
-              </div>
-            </div>
           </div>
         </nav>
       </div>
