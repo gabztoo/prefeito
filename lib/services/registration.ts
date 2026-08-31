@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { registration_token, user, account, invitation } from "@/db/schema";
+import { registration_token, user, account, invitation, voter } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
@@ -23,9 +23,10 @@ export interface RegistrationToken {
 }
 
 export interface GenerateTokenInput {
-  role: "coordinator" | "leader";
+  role: "coordinator" | "leader" | "voter";
   invitedBy: string;
   coordinatorId?: string;
+  leaderId?: string;
 }
 
 export async function generateRegistrationToken(
@@ -34,6 +35,13 @@ export async function generateRegistrationToken(
   try {
     const token = crypto.randomBytes(32).toString("base64url");
 
+    const basePath =
+      input.role === "coordinator"
+        ? "coordenador"
+        : input.role === "leader"
+        ? "lider"
+        : "eleitor";
+
     const [created] = await db
       .insert(registration_token)
       .values({
@@ -41,10 +49,10 @@ export async function generateRegistrationToken(
         role: input.role,
         invitedBy: input.invitedBy,
         coordinatorId: input.coordinatorId || null,
+        leaderId: input.leaderId || null,
       })
       .returning();
 
-    const basePath = input.role === "coordinator" ? "coordenador" : "lider";
     const url = `${basePath}/${created.token}`;
 
     return {
@@ -60,6 +68,16 @@ export async function generateRegistrationToken(
   }
 }
 
+export async function generateVoterRegistrationLink(
+  leaderId: string
+): Promise<ActionResult<{ token: string; url: string }>> {
+  return generateRegistrationToken({
+    role: "voter",
+    invitedBy: leaderId,
+    leaderId,
+  });
+}
+
 export async function getRegistrationToken(
   token: string
 ): Promise<
@@ -68,6 +86,7 @@ export async function getRegistrationToken(
     role: string;
     invitedBy: string;
     coordinatorId: string | null;
+    leaderId: string | null;
     active: boolean;
     inviterName: string;
   }>
@@ -80,6 +99,7 @@ export async function getRegistrationToken(
         role: registration_token.role,
         invitedBy: registration_token.invitedBy,
         coordinatorId: registration_token.coordinatorId,
+        leaderId: registration_token.leaderId,
         active: registration_token.active,
       })
       .from(registration_token)
@@ -115,6 +135,7 @@ export async function getRegistrationToken(
         role: record.role,
         invitedBy: record.invitedBy,
         coordinatorId: record.coordinatorId,
+        leaderId: record.leaderId,
         active: record.active,
         inviterName: inviter?.name || "Desconhecido",
       },
@@ -450,6 +471,86 @@ export async function listRegistrationTokens(
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao listar links de cadastro",
+    };
+  }
+}
+
+export interface VoterRegistrationInput {
+  token: string;
+  name: string;
+  phone: string;
+  zone: string;
+  section: string;
+  voterTitle?: string;
+  cep?: string;
+}
+
+export async function completeVoterRegistration(
+  input: VoterRegistrationInput
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [tokenRecord] = await tx
+        .select()
+        .from(registration_token)
+        .where(
+          and(
+            eq(registration_token.token, input.token),
+            eq(registration_token.active, true)
+          )
+        )
+        .limit(1);
+
+      if (!tokenRecord || tokenRecord.role !== "voter") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Link de cadastro inválido",
+        };
+      }
+
+      const cleanPhone = input.phone.replace(/\D/g, "");
+      if (cleanPhone.length !== 11) {
+        return {
+          ok: false,
+          code: "VALIDATION_ERROR",
+          message: "Telefone deve conter 11 dígitos",
+        };
+      }
+
+      const [existingVoter] = await tx
+        .select()
+        .from(voter)
+        .where(eq(voter.phone, cleanPhone))
+        .limit(1);
+
+      if (existingVoter) {
+        return {
+          ok: false,
+          code: "DUPLICATE_PHONE",
+          message: "Este telefone já está cadastrado",
+        };
+      }
+
+      const voterId = crypto.randomUUID();
+
+      await tx.insert(voter).values({
+        id: voterId,
+        leaderId: tokenRecord.leaderId,
+        name: input.name,
+        phone: cleanPhone,
+        zone: input.zone,
+        section: input.section,
+        voterTitle: input.voterTitle || null,
+      });
+
+      return { ok: true, data: { id: voterId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao cadastrar eleitor",
     };
   }
 }

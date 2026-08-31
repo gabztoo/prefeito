@@ -209,8 +209,8 @@ export async function listVoters(
       section: string;
       phone: string;
       voterTitle: string | null;
-      campaignId: string;
-      campaignLeaderId: string;
+      campaignId: string | null;
+      campaignLeaderId: string | null;
       createdAt: Date;
     }>;
     totalFiltered: number;
@@ -659,7 +659,7 @@ export async function editVoter(
         .from(voter)
         .where(
           and(
-            eq(voter.campaignId, existing[0].campaignId),
+            existing[0].campaignId ? eq(voter.campaignId, existing[0].campaignId) : undefined,
             eq(voter.phone, normalizedData.phone),
             sql`${voter.id} != ${voterId}`
           )

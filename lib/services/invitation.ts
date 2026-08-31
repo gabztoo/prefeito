@@ -1409,3 +1409,167 @@ export async function listLeadersWithVoters(
     };
   }
 }
+
+export async function deleteCoordinator(
+  coordinatorId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem excluir coordenadores",
+        };
+      }
+
+      const [coordinator] = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .where(eq(user.id, coordinatorId))
+        .limit(1);
+
+      if (!coordinator || coordinator.role !== "coordinator") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Coordenador não encontrado",
+        };
+      }
+
+      const leaderIds = await tx
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.coordinatorId, coordinatorId))
+        .then((rows) => rows.map((r) => r.id));
+
+      if (leaderIds.length > 0) {
+        await tx
+          .delete(voter)
+          .where(
+            inArray(
+              voter.campaignLeaderId,
+              tx
+                .select({ id: campaign_leader.id })
+                .from(campaign_leader)
+                .where(inArray(campaign_leader.leaderId, leaderIds))
+            )
+          );
+
+        await tx
+          .delete(campaign_leader)
+          .where(inArray(campaign_leader.leaderId, leaderIds));
+
+        await tx.delete(user).where(inArray(user.id, leaderIds));
+      }
+
+      await tx
+        .delete(session)
+        .where(eq(session.userId, coordinatorId));
+
+      await tx
+        .delete(invitation)
+        .where(eq(invitation.userId, coordinatorId));
+
+      await tx
+        .delete(user)
+        .where(eq(user.id, coordinatorId));
+
+      return { ok: true, data: { id: coordinatorId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao excluir coordenador",
+    };
+  }
+}
+
+export async function deleteLeader(
+  leaderId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [requester] = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (requester?.role !== "admin" && requester?.role !== "coordinator") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores ou coordenadores podem excluir líderes",
+        };
+      }
+
+      const [leader] = await tx
+        .select({ id: user.id, role: user.role, coordinatorId: user.coordinatorId })
+        .from(user)
+        .where(eq(user.id, leaderId))
+        .limit(1);
+
+      if (!leader || leader.role !== "leader") {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Líder não encontrado",
+        };
+      }
+
+      if (requester?.role === "coordinator" && leader.coordinatorId !== adminId) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Você só pode excluir líderes do seu coordenadoramento",
+        };
+      }
+
+      const campaignLeaderIds = await tx
+        .select({ id: campaign_leader.id })
+        .from(campaign_leader)
+        .where(eq(campaign_leader.leaderId, leaderId))
+        .then((rows) => rows.map((r) => r.id));
+
+      if (campaignLeaderIds.length > 0) {
+        await tx
+          .delete(voter)
+          .where(inArray(voter.campaignLeaderId, campaignLeaderIds));
+      }
+
+      await tx
+        .delete(campaign_leader)
+        .where(eq(campaign_leader.leaderId, leaderId));
+
+      await tx
+        .delete(session)
+        .where(eq(session.userId, leaderId));
+
+      await tx
+        .delete(invitation)
+        .where(eq(invitation.userId, leaderId));
+
+      await tx
+        .delete(user)
+        .where(eq(user.id, leaderId));
+
+      return { ok: true, data: { id: leaderId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao excluir líder",
+    };
+  }
+}

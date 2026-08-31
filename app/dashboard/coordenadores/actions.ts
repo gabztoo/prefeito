@@ -5,9 +5,11 @@ import { headers } from "next/headers";
 import {
   inviteCoordinator,
   deactivateCoordinator,
+  deleteCoordinator,
 } from "@/lib/services/invitation";
 import {
   generateRegistrationToken,
+  generateVoterRegistrationLink,
   deactivateRegistrationToken,
   listRegistrationTokens,
 } from "@/lib/services/registration";
@@ -232,4 +234,73 @@ export async function listCoordinatorLinksAction(): Promise<
   }
 
   return listRegistrationTokens(result.session.userId, "admin");
+}
+
+export async function deleteCoordinatorAction(
+  coordinatorId: string
+): Promise<ActionResult<{ id: string }>> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para excluir coordenadores",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem excluir coordenadores",
+    };
+  }
+
+  const deleteResult = await deleteCoordinator(
+    coordinatorId,
+    result.session.userId
+  );
+
+  if (deleteResult.ok) {
+    revalidatePath("/dashboard/coordenadores");
+    await logAuditEvent({
+      action: "delete",
+      entity: "user",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: deleteResult.data.id,
+      metadata: { operation: "delete_coordinator" },
+    });
+  }
+
+  return deleteResult;
+}
+
+export async function generateVoterLinkAction(): Promise<
+  ActionResult<{ token: string; url: string }>
+> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para gerar links",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem gerar links de eleitor",
+    };
+  }
+
+  return generateVoterRegistrationLink(result.session.userId);
 }

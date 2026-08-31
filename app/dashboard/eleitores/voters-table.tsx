@@ -25,8 +25,8 @@ interface Voter {
   section: string;
   phone: string;
   voterTitle: string | null;
-  campaignId: string;
-  campaignLeaderId: string;
+  campaignId: string | null;
+  campaignLeaderId: string | null;
   createdAt: Date;
 }
 

@@ -3,14 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { deactivateLeaderAction } from "./actions";
+import { TrashIcon, BanIcon } from "lucide-react";
+import {
+  deactivateLeaderAction,
+  deleteLeaderAction,
+} from "./actions";
 
 export function LeaderActions({
   leaderId,
   disabled,
+  isAdmin,
 }: {
   leaderId: string;
   disabled: boolean;
+  isAdmin: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -30,14 +36,49 @@ export function LeaderActions({
     });
   }
 
+  function deleteLeaderFn() {
+    if (
+      !window.confirm(
+        "Excluir permanentemente este líder e todos os eleitores vinculados? Esta ação não pode ser desfeita."
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await deleteLeaderAction(leaderId);
+      if (!result.ok) {
+        window.alert(result.message);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
-    <Button
-      type="button"
-      variant="destructive"
-      onClick={deactivate}
-      disabled={disabled || isPending}
-    >
-      Desativar líder
-    </Button>
+    <div className="flex gap-1">
+      <Button
+        type="button"
+        variant="destructive"
+        size="sm"
+        onClick={deactivate}
+        disabled={disabled || isPending}
+        title="Desativar líder"
+      >
+        <BanIcon className="h-4 w-4" />
+      </Button>
+      {isAdmin && (
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          onClick={deleteLeaderFn}
+          disabled={disabled || isPending}
+          title="Excluir permanentemente"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 }

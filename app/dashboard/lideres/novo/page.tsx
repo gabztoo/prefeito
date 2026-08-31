@@ -87,14 +87,19 @@ export default function NovoLiderPage() {
         <div className="w-full max-w-2xl">
           <Alert className="border-green-500 bg-green-50">
             <AlertDescription className="text-green-800">
-              Líder criado com sucesso!<br/>
-              <strong>Login:</strong> {login}<br/>
+              Líder criado com sucesso!
+              <br />
+              <strong>Email:</strong> {login}@prefeito.local
+              <br />
               <strong>Senha padrão:</strong> 12345678
             </AlertDescription>
           </Alert>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-2">
             <Link href="/dashboard/lideres">
               <Button>Voltar para Líderes</Button>
+            </Link>
+            <Link href="/sign-in">
+              <Button variant="outline">Ir para o login</Button>
             </Link>
           </div>
         </div>

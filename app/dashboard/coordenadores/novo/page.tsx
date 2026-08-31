@@ -95,14 +95,17 @@ export default function NovoCoordenadorPage() {
             <AlertDescription className="text-green-800">
               Coordenador criado com sucesso!
               <br />
-              <strong>Login:</strong> {login}
+              <strong>Email:</strong> {login}@prefeito.local
               <br />
               <strong>Senha padrão:</strong> 12345678
             </AlertDescription>
           </Alert>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-2">
             <Link href="/dashboard/coordenadores">
               <Button>Voltar para Coordenadores</Button>
+            </Link>
+            <Link href="/sign-in">
+              <Button variant="outline">Ir para o login</Button>
             </Link>
           </div>
         </div>

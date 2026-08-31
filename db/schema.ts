@@ -142,8 +142,11 @@ export const voter = pgTable(
   "voter",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    campaignId: uuid("campaignId").notNull(),
-    campaignLeaderId: uuid("campaignLeaderId").notNull(),
+    campaignId: uuid("campaignId"),
+    campaignLeaderId: uuid("campaignLeaderId"),
+    leaderId: text("leaderId").references(() => user.id, {
+      onDelete: "set null",
+    }),
     name: varchar("name", { length: 120 }).notNull(),
     zone: varchar("zone", { length: 4 }).notNull(),
     section: varchar("section", { length: 4 }).notNull(),
@@ -234,6 +237,9 @@ export const registration_token = pgTable(
     coordinatorId: text("coordinatorId").references(() => user.id, {
       onDelete: "set null",
     }),
+    leaderId: text("leaderId").references(() => user.id, {
+      onDelete: "set null",
+    }),
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
@@ -248,6 +254,9 @@ export const registration_token = pgTable(
     registrationTokenCoordinatorIdIdx: index(
       "registration_token_coordinatorId_idx"
     ).on(table.coordinatorId),
+    registrationTokenLeaderIdIdx: index("registration_token_leaderId_idx").on(
+      table.leaderId
+    ),
   })
 );
 

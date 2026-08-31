@@ -7,9 +7,11 @@ import {
   acceptInvite,
   completePasswordReset,
   deactivateLeader,
+  deleteLeader,
 } from "@/lib/services/invitation";
 import {
   generateRegistrationToken,
+  generateVoterRegistrationLink,
   deactivateRegistrationToken,
   listRegistrationTokens,
 } from "@/lib/services/registration";
@@ -261,4 +263,70 @@ export async function listLeaderLinksAction(): Promise<
   }
 
   return listRegistrationTokens(result.session.userId, result.user?.role || "admin");
+}
+
+export async function deleteLeaderAction(
+  leaderId: string
+): Promise<ActionResult<{ id: string }>> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para excluir líderes",
+    };
+  }
+
+  if (result.user?.role !== "admin" && result.user?.role !== "coordinator") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores ou coordenadores podem excluir líderes",
+    };
+  }
+
+  const deleteResult = await deleteLeader(leaderId, result.session.userId);
+
+  if (deleteResult.ok) {
+    revalidatePath("/dashboard/lideres");
+    await logAuditEvent({
+      action: "delete",
+      entity: "user",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: deleteResult.data.id,
+      metadata: { operation: "delete_leader" },
+    });
+  }
+
+  return deleteResult;
+}
+
+export async function generateVoterLinkAction(): Promise<
+  ActionResult<{ token: string; url: string }>
+> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para gerar links",
+    };
+  }
+
+  if (result.user?.role !== "admin" && result.user?.role !== "coordinator") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores ou coordenadores podem gerar links de eleitor",
+    };
+  }
+
+  return generateVoterRegistrationLink(result.session.userId);
 }
