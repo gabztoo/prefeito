@@ -31,6 +31,7 @@ export async function listVotersAction(options?: {
       voterTitle: string | null;
       campaignId: string | null;
       campaignLeaderId: string | null;
+      leaderName: string | null;
       createdAt: Date;
     }>;
     totalFiltered: number;

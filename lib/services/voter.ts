@@ -211,6 +211,7 @@ export async function listVoters(
       voterTitle: string | null;
       campaignId: string | null;
       campaignLeaderId: string | null;
+      leaderName: string | null;
       createdAt: Date;
     }>;
     totalFiltered: number;
@@ -233,7 +234,7 @@ export async function listVoters(
         )
       );
 
-    const conditions = [inArray(voter.campaignLeaderId, leaderLinkIds)];
+    const conditions = [or(inArray(voter.campaignLeaderId, leaderLinkIds), eq(voter.leaderId, userId))];
 
     if (filters.campaignId) {
       conditions.push(eq(voter.campaignId, filters.campaignId));
@@ -260,8 +261,20 @@ export async function listVoters(
       .where(and(...conditions));
 
     const voters = await db
-      .select()
+      .select({
+        id: voter.id,
+        name: voter.name,
+        zone: voter.zone,
+        section: voter.section,
+        phone: voter.phone,
+        voterTitle: voter.voterTitle,
+        campaignId: voter.campaignId,
+        campaignLeaderId: voter.campaignLeaderId,
+        leaderName: user.name,
+        createdAt: voter.createdAt,
+      })
       .from(voter)
+      .leftJoin(user, eq(voter.leaderId, user.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
@@ -299,7 +312,7 @@ export async function listVoters(
         )
       );
 
-    const conditions = [inArray(voter.campaignLeaderId, leaderLinkIds)];
+    const conditions = [or(inArray(voter.campaignLeaderId, leaderLinkIds), inArray(voter.leaderId, coordinatorLeaderIds))];
 
     if (filters.campaignId) {
       conditions.push(eq(voter.campaignId, filters.campaignId));
@@ -326,8 +339,20 @@ export async function listVoters(
       .where(and(...conditions));
 
     const voters = await db
-      .select()
+      .select({
+        id: voter.id,
+        name: voter.name,
+        zone: voter.zone,
+        section: voter.section,
+        phone: voter.phone,
+        voterTitle: voter.voterTitle,
+        campaignId: voter.campaignId,
+        campaignLeaderId: voter.campaignLeaderId,
+        leaderName: user.name,
+        createdAt: voter.createdAt,
+      })
       .from(voter)
+      .leftJoin(user, eq(voter.leaderId, user.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
@@ -374,8 +399,20 @@ export async function listVoters(
     .where(conditions.length > 0 ? and(...conditions) : undefined);
 
   const voters = await db
-    .select()
+    .select({
+      id: voter.id,
+      name: voter.name,
+      zone: voter.zone,
+      section: voter.section,
+      phone: voter.phone,
+      voterTitle: voter.voterTitle,
+      campaignId: voter.campaignId,
+      campaignLeaderId: voter.campaignLeaderId,
+      leaderName: user.name,
+      createdAt: voter.createdAt,
+    })
     .from(voter)
+    .leftJoin(user, eq(voter.leaderId, user.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .limit(limit)
     .offset(offset)

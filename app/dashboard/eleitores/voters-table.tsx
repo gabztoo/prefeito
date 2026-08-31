@@ -27,6 +27,7 @@ interface Voter {
   voterTitle: string | null;
   campaignId: string | null;
   campaignLeaderId: string | null;
+  leaderName: string | null;
   createdAt: Date;
 }
 
@@ -223,6 +224,12 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
                 <span className="text-muted-foreground">Cadastro: </span>
                 <span>{new Date(voter.createdAt).toLocaleDateString("pt-BR")}</span>
               </div>
+              {voter.leaderName && (
+                <div>
+                  <span className="text-muted-foreground">Líder: </span>
+                  <span>{voter.leaderName}</span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
