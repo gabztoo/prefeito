@@ -192,7 +192,7 @@ export async function completeCoordinatorRegistration(
       };
     }
 
-    const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(1).join(" ") || input.name);
+    const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(-1)[0] || input.name);
     const loginEmail = `${login}@prefeito.local`;
 
     const [existingUser] = await db
@@ -296,7 +296,7 @@ export async function completeLeaderRegistration(
       };
     }
 
-    const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(1).join(" ") || input.name);
+    const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(-1)[0] || input.name);
     const loginEmail = `${login}@prefeito.local`;
 
     const [existingUser] = await db

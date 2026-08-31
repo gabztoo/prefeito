@@ -19,10 +19,23 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 import { submitLeaderRegistrationAction } from "./actions";
 
+function formatCpf(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  return d
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+function formatCep(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 8);
+  return d.replace(/(\d{5})(\d)/, "$1-$2");
+}
+
 const leaderFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(120),
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").max(128),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").max(128),
   cpf: z.string().optional(),
   cep: z.string().optional(),
   address: z.string().optional(),
@@ -69,7 +82,7 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
         const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
         const data = await res.json();
         if (!data.erro) {
-          form.setValue("address", `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}, `);
+          form.setValue("address", `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`);
         }
       } catch {}
     }
@@ -144,11 +157,11 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="name">Nome Completo</FormLabel>
+              <FormLabel htmlFor="name">Nome e Sobrenome</FormLabel>
               <FormControl>
                 <Input
                   id="name"
-                  placeholder="Seu nome completo"
+                  placeholder="Nome e sobrenome"
                   aria-describedby="name-error"
                   aria-invalid={!!form.formState.errors.name}
                   {...field}
@@ -190,7 +203,7 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 12 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   aria-describedby="password-error"
                   aria-invalid={!!form.formState.errors.password}
                   {...field}
@@ -210,8 +223,15 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
               <FormControl>
                 <Input
                   id="cpf"
-                  placeholder="123.456.789-00"
-                  {...field}
+                  placeholder="000.000.000-00"
+                  value={field.value ? formatCpf(field.value) : ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    field.onChange(raw);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                 />
               </FormControl>
               <FormMessage />
@@ -230,9 +250,24 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
                   <Input
                     id="cep"
                     placeholder="00000-000"
-                    maxLength={8}
-                    value={field.value}
-                    onChange={(e) => handleCepChange(e.target.value)}
+                    value={field.value ? formatCep(field.value) : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
+                      form.setValue("cep", raw);
+                      if (raw.length === 8) {
+                        fetch(`https://viacep.com.br/ws/${raw}/json/`)
+                          .then((res) => res.json())
+                          .then((data) => {
+                            if (!data.erro) {
+                              form.setValue("address", `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`);
+                            }
+                          })
+                          .catch(() => {});
+                      }
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
                   />
                 </FormControl>
                 <FormMessage />
@@ -287,8 +322,15 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
                 <FormControl>
                   <Input
                     id="voterTitle"
-                    placeholder="123456789012"
-                    {...field}
+                    placeholder="0000 0000 0000"
+                    value={field.value ? field.value.replace(/(\d{4})(?=\d)/g, "$1 ").trim() : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      field.onChange(raw);
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
                   />
                 </FormControl>
                 <FormMessage />

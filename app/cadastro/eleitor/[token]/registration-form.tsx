@@ -191,7 +191,17 @@ export function VoterRegistrationForm({ token }: VoterRegistrationFormProps) {
             <FormItem>
               <FormLabel>Título de eleitor</FormLabel>
               <FormControl>
-                <Input placeholder="000000000000" maxLength={12} {...field} />
+                <Input
+                  placeholder="000000000000"
+                  value={field.value ? field.value.replace(/(\d{4})(?=\d)/g, "$1 ").trim() : ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                    field.onChange(raw);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
