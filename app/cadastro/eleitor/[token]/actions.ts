@@ -9,8 +9,7 @@ export async function submitVoterRegistrationAction(data: {
   phone: string;
   zone: string;
   section: string;
-  voterTitle?: string;
-  cep?: string;
+  voterTitle: string;
 }): Promise<ActionResult<{ id: string }>> {
   return completeVoterRegistration({
     token: data.token,
@@ -19,6 +18,5 @@ export async function submitVoterRegistrationAction(data: {
     zone: data.zone,
     section: data.section,
     voterTitle: data.voterTitle,
-    cep: data.cep,
   });
 }

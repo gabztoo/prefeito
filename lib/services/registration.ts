@@ -481,8 +481,7 @@ export interface VoterRegistrationInput {
   phone: string;
   zone: string;
   section: string;
-  voterTitle?: string;
-  cep?: string;
+  voterTitle: string;
 }
 
 export async function completeVoterRegistration(
@@ -541,7 +540,7 @@ export async function completeVoterRegistration(
         phone: cleanPhone,
         zone: input.zone,
         section: input.section,
-        voterTitle: input.voterTitle || null,
+        voterTitle: input.voterTitle,
       });
 
       return { ok: true, data: { id: voterId } };

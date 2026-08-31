@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LeaderRegistrationForm } from "./registration-form";
 import { getRegistrationToken } from "@/lib/services/registration";
+import Image from "next/image";
 
 interface PageProps {
   params: Promise<{
@@ -33,6 +34,15 @@ export default async function PublicLeaderRegistrationPage({ params }: PageProps
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <Image
+              src="/wbranco.jpeg"
+              alt="Logo"
+              width={140}
+              height={50}
+              className="object-contain"
+            />
+          </div>
           <CardTitle className="text-2xl">Cadastro de Líder</CardTitle>
           <CardDescription>
             Convite de: <span className="text-[#1e40af] font-medium">{tokenData.inviterName}</span>
