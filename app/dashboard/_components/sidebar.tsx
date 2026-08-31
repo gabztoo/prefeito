@@ -83,18 +83,22 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                   className={clsx(
                     "flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors hover:cursor-pointer",
                     isActive
-                      ? "bg-white/20 text-[#06b6d4]"
+                      ? "bg-white/20 text-white"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                 >
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                  <item.icon
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                    {...(isActive ? { fill: "currentColor" } : {})}
+                  />
                   {item.label}
                 </Link>
               );
             })}
           </div>
 
-          <div className="flex flex-col gap-1 w-full pb-[100px]">
+          <div className="flex flex-col gap-1 w-full pb-[140px]">
             <div className="px-4">
               <Link
                 href="/dashboard/settings"
@@ -102,11 +106,15 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 className={clsx(
                   "flex items-center w-full gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors hover:cursor-pointer",
                   pathname === "/dashboard/settings"
-                    ? "bg-white/20 text-[#06b6d4]"
+                    ? "bg-white/20 text-white"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <Settings className="h-5 w-5" aria-hidden="true" />
+                <Settings
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                  {...(pathname === "/dashboard/settings" ? { fill: "currentColor" } : {})}
+                />
                 Configurações
               </Link>
             </div>
