@@ -77,7 +77,14 @@ export default function DashboardTopNav({
           </SheetTrigger>
           <SheetContent side="left" className="w-[min(20rem,85vw)]">
             <SheetHeader className="text-left">
-              <SheetTitle>Hermes</SheetTitle>
+              <SheetTitle className="sr-only">Hermes</SheetTitle>
+              <Image
+                src="/logowl.png"
+                alt="Logo"
+                width={140}
+                height={50}
+                className="object-contain"
+              />
               <SheetDescription>
                 Navegue pelo painel administrativo.
               </SheetDescription>

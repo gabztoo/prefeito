@@ -79,15 +79,17 @@ export default function SignIn() {
     <main
       className="flex flex-col justify-center items-center w-full min-h-screen bg-white p-4"
     >
-      <Image
-        src="/logowl.png"
-        alt="Logo"
-        width={140}
-        height={60}
-        className="mb-6 object-contain"
-      />
-      <Card className="max-w-xs w-full shadow-xl border-0 rounded-xl">
-        <CardHeader className="text-center space-y-2 pt-6">
+      <Card className="max-w-sm w-full shadow-xl border-0 rounded-xl">
+        <CardHeader className="text-center space-y-3 pt-6">
+          <div className="flex justify-center">
+            <Image
+              src="/logowl.png"
+              alt="Logo"
+              width={180}
+              height={70}
+              className="object-contain"
+            />
+          </div>
           <CardTitle className="text-xl font-bold text-gray-800">
             Acesso Restrito
           </CardTitle>
