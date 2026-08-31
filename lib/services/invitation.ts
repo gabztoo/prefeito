@@ -8,7 +8,7 @@ import {
   campaign_leader,
   voter,
 } from "@/db/schema";
-import { eq, and, gt, inArray, sql, count } from "drizzle-orm";
+import { eq, and, gt, inArray, sql, count, or } from "drizzle-orm";
 import { aliasedTable } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
@@ -1185,7 +1185,13 @@ export async function listLeadersWithVoterCount(
           const [{ total }] = await db
             .select({ total: count() })
             .from(voter)
-            .where(inArray(voter.campaignLeaderId, linkIds));
+            .where(or(inArray(voter.campaignLeaderId, linkIds), eq(voter.leaderId, leader.id)));
+          voterCount = Number(total);
+        } else {
+          const [{ total }] = await db
+            .select({ total: count() })
+            .from(voter)
+            .where(eq(voter.leaderId, leader.id));
           voterCount = Number(total);
         }
 
@@ -1380,7 +1386,25 @@ export async function listLeadersWithVoters(
               voterTitle: voter.voterTitle,
             })
             .from(voter)
-            .where(inArray(voter.campaignLeaderId, linkIds))
+            .where(or(inArray(voter.campaignLeaderId, linkIds), eq(voter.leaderId, leader.id)))
+            .limit(100);
+
+          voters = voterResults.map((v) => ({
+            ...v,
+            cpf: null,
+          }));
+        } else {
+          const voterResults = await db
+            .select({
+              id: voter.id,
+              name: voter.name,
+              zone: voter.zone,
+              section: voter.section,
+              phone: voter.phone,
+              voterTitle: voter.voterTitle,
+            })
+            .from(voter)
+            .where(eq(voter.leaderId, leader.id))
             .limit(100);
 
           voters = voterResults.map((v) => ({

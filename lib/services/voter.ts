@@ -464,7 +464,7 @@ export async function getVoterStats(
     const [totalResult] = await db
       .select({ total: count() })
       .from(voter)
-      .where(inArray(voter.campaignLeaderId, leaderLinkIds));
+      .where(or(inArray(voter.campaignLeaderId, leaderLinkIds), eq(voter.leaderId, userId)));
 
     const byCampaignRaw = await db
       .select({
@@ -527,7 +527,7 @@ export async function getVoterStats(
     const [totalResult] = await db
       .select({ total: count() })
       .from(voter)
-      .where(inArray(voter.campaignLeaderId, leaderLinkIds));
+      .where(or(inArray(voter.campaignLeaderId, leaderLinkIds), inArray(voter.leaderId, coordinatorLeaderIds)));
 
     const byCampaignRaw = await db
       .select({
@@ -569,6 +569,43 @@ export async function getVoterStats(
       )
       .groupBy(campaign_leader.leaderId, user.name);
 
+    const directByLeaderRaw = await db
+      .select({
+        leaderId: voter.leaderId,
+        total: count(voter.id),
+      })
+      .from(voter)
+      .where(inArray(voter.leaderId, coordinatorLeaderIds))
+      .groupBy(voter.leaderId);
+
+    const directByLeaderMap = new Map<string, number>();
+    for (const row of directByLeaderRaw) {
+      if (row.leaderId) {
+        directByLeaderMap.set(row.leaderId, Number(row.total));
+      }
+    }
+
+    const mergedByLeader = byLeaderRaw.map((r) => ({
+      leaderId: r.leaderId,
+      leaderName: r.leaderName || "Desconhecido",
+      total: Number(r.total) + (directByLeaderMap.get(r.leaderId) || 0),
+    }));
+
+    for (const [leaderId, total] of directByLeaderMap) {
+      if (!mergedByLeader.find((r) => r.leaderId === leaderId)) {
+        const [nameResult] = await db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, leaderId))
+          .limit(1);
+        mergedByLeader.push({
+          leaderId,
+          leaderName: nameResult?.name || "Desconhecido",
+          total,
+        });
+      }
+    }
+
     return {
       ok: true,
       data: {
@@ -577,10 +614,10 @@ export async function getVoterStats(
           campaignName: row.campaignName,
           total: Number(row.total),
         })),
-        byLeader: byLeaderRaw.map((r) => ({
+        byLeader: mergedByLeader.map((r) => ({
           leaderId: r.leaderId,
           leaderName: r.leaderName || "Desconhecido",
-          total: Number(r.total),
+          total: r.total,
         })),
         grandTotal: Number(totalResult.total),
       },
