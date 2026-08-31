@@ -21,6 +21,7 @@ import {
   Bell,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { ReactNode } from "react";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
@@ -104,9 +105,15 @@ export default function DashboardTopNav({
         </Sheet>
         <Link
           href="/dashboard"
-          className="text-sm font-semibold min-[1024px]:hidden text-white"
+          className="min-[1024px]:hidden"
         >
-          Hermes
+          <Image
+            src="/logowl.png"
+            alt="Logo"
+            width={100}
+            height={40}
+            className="object-contain"
+          />
         </Link>
         <div className="ml-auto flex items-center gap-3">
           <button className="relative text-white/80 hover:text-white transition-colors" aria-label="Notificações">
