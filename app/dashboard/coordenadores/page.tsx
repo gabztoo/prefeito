@@ -182,7 +182,7 @@ export default async function CoordenadoresPage() {
                             className="p-3 rounded-lg border bg-muted/30"
                           >
                             <div className="flex justify-between items-start mb-1">
-                              <p className="font-medium text-sm truncate">
+                              <p className="font-medium text-sm truncate text-[#f59e0b]">
                                 {leader.name}
                               </p>
                               <Badge

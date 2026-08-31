@@ -1322,7 +1322,20 @@ export async function listLeadersWithVoters(
 
     const coordinator = aliasedTable(user, "coordinator");
 
-    const leaders = await db
+    const leaders: Array<{
+      id: string;
+      name: string;
+      email: string;
+      cpf: string | null;
+      cep: string | null;
+      address: string | null;
+      voterTitle: string | null;
+      zone: string | null;
+      section: string | null;
+      localAtuacao: string | null;
+      banned: boolean;
+      coordinatorName: string | null;
+    }> = await db
       .select({
         id: user.id,
         name: user.name,
