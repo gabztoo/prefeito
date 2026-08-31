@@ -16,6 +16,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { User, Lock } from "lucide-react";
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
 export default function SignIn() {
   const router = useRouter();
   const [login, setLogin] = useState("");
@@ -58,7 +77,7 @@ export default function SignIn() {
   return (
     <main
       className="flex flex-col justify-center items-center w-full min-h-screen bg-contain bg-center bg-no-repeat p-4"
-      style={{ backgroundImage: "url('/bglogin.jpeg')" }}
+      style={{ backgroundImage: "url('/bglogin2.jpg')" }}
     >
       <Card className="max-w-xs w-full shadow-xl border-0 rounded-xl">
         <CardHeader className="text-center space-y-2 pt-6">
@@ -135,6 +154,30 @@ export default function SignIn() {
               {isLoading ? "Entrando..." : "ENTRAR NO SISTEMA"}
             </Button>
           </form>
+
+          <div className="mt-5 pt-4 border-t border-gray-100 text-center">
+            <p className="text-[11px] text-gray-400 mb-1.5">Desenvolvido por</p>
+            <div className="flex items-center justify-center gap-3">
+              <a
+                href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-600 flex items-center gap-1 text-[11px] duration-150"
+              >
+                <InstagramIcon className="h-3 w-3" />
+                <span>sugiiartz</span>
+              </a>
+              <a
+                href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-600 flex items-center gap-1 text-[11px] duration-150"
+              >
+                <InstagramIcon className="h-3 w-3" />
+                <span>macae092</span>
+              </a>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </main>
