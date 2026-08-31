@@ -126,7 +126,7 @@ export default async function Dashboard() {
       value: isAdmin || isCoordinator ? stats?.activeLeaders : stats?.activeLinks,
       description: isAdmin || isCoordinator ? "Com acesso ativo" : "Disponíveis para cadastro",
       href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/eleitores",
-      icon: UserPlus,
+      icon: Users,
     },
   ];
 
