@@ -61,13 +61,13 @@ export default function DashboardTopNav({
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-3 backdrop-blur lg:h-[52px] lg:px-5">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-[#1e40af] px-3 lg:h-[52px] lg:px-5 lg:bg-background lg:border-b">
         <Sheet>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="min-[1024px]:hidden"
+              className="min-[1024px]:hidden text-white hover:bg-white/10"
               aria-label="Abrir menu de navegação"
             >
               <Menu aria-hidden="true" />
@@ -103,7 +103,7 @@ export default function DashboardTopNav({
         </Sheet>
         <Link
           href="/dashboard"
-          className="text-sm font-semibold min-[1024px]:hidden"
+          className="text-sm font-semibold min-[1024px]:hidden text-white"
         >
           Hermes
         </Link>

@@ -76,8 +76,8 @@ export default function SignIn() {
   }
 
   return (
-    <main className="flex flex-col justify-center items-center w-full min-h-screen bg-[#fafaf9] p-4">
-      <Card className="max-w-md w-full shadow-lg border-[#d6d3d1]">
+    <main className="flex flex-col justify-center items-center w-full min-h-screen bg-[#1e40af] p-4">
+      <Card className="max-w-md w-full shadow-lg border-[#bfdbfe]">
         <CardHeader className="text-center space-y-3">
           <div className="flex justify-center">
             <Image
@@ -134,7 +134,7 @@ export default function SignIn() {
             <div className="text-right text-sm">
               <Link
                 href="/esqueci-senha"
-                className="text-[#374151] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="text-[#1e40af] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Esqueci minha senha
               </Link>

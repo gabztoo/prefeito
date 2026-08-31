@@ -13,25 +13,6 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-function InstagramIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  );
-}
-
 interface NavItem {
   label: string;
   href: string;
@@ -83,34 +64,28 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   );
 
   return (
-    <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background">
-      <div className="flex h-full flex-col">
-        <div className="flex h-[3.45rem] items-center border-b px-4">
-          <Link
-            prefetch={true}
-            className="flex items-center gap-2 font-semibold hover:cursor-pointer"
-            href="/"
-          >
-            <img src="/hermes.jpg" alt="Hermes" className="h-7 w-7 rounded-sm object-cover" />
-            <span>Hermes</span>
-          </Link>
-        </div>
-
-        <nav className="flex flex-col h-full justify-between items-start w-full space-y-1">
-          <div className="w-full space-y-1 p-4">
+    <div className="min-[1024px]:block hidden w-64 h-full relative overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/sidebar.jpeg')" }}
+      />
+      <div className="absolute inset-0 bg-[#1a3a8a]/30" />
+      <div className="relative flex h-full flex-col z-10">
+        <nav className="flex flex-col h-full justify-between items-start w-full">
+          <div className="w-full space-y-1 p-4 pt-6">
             {filteredNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
-                  className={clsx(
-                    "flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
-                    pathname === item.href
-                      ? "bg-primary/10 text-primary hover:bg-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
+                className={clsx(
+                  "flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:cursor-pointer",
+                  pathname === item.href
+                    ? "bg-white/20 text-white"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                )}
               >
-                <item.icon className="h-4 w-4" aria-hidden="true" />
+                <item.icon className="h-5 w-5" aria-hidden="true" />
                 {item.label}
               </Link>
             ))}
@@ -122,36 +97,44 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 href="/dashboard/settings"
                 aria-current={pathname === "/dashboard/settings" ? "page" : undefined}
                 className={clsx(
-                  "flex items-center w-full gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
+                  "flex items-center w-full gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:cursor-pointer",
                   pathname === "/dashboard/settings"
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-white/20 text-white"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <Settings className="h-4 w-4" aria-hidden="true" />
+                <Settings className="h-5 w-5" aria-hidden="true" />
                 Configurações
               </Link>
             </div>
             <UserProfile />
             <div className="px-4 pb-4">
-              <p className="text-xs text-muted-foreground text-center mb-2">Desenvolvido por</p>
+              <p className="text-xs text-white/50 text-center mb-2">Desenvolvido por</p>
               <div className="flex items-center justify-center gap-4">
                 <a
                   href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
+                  className="text-white/70 hover:text-white flex items-center gap-1 text-xs duration-150"
                 >
-                  <InstagramIcon className="h-3 w-3" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
                   <span>sugiiartz</span>
                 </a>
                 <a
                   href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
+                  className="text-white/70 hover:text-white flex items-center gap-1 text-xs duration-150"
                 >
-                  <InstagramIcon className="h-3 w-3" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
                   <span>macae092</span>
                 </a>
               </div>

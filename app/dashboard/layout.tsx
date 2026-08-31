@@ -7,6 +7,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import DashboardTopNav from "./_components/navbar";
 import DashboardSideBar from "./_components/sidebar";
+import MobileNav from "./_components/mobile-nav";
 
 export default async function DashboardLayout({
   children,
@@ -34,11 +35,12 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden w-full">
       <DashboardSideBar userRole={result.user?.role ?? undefined} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
         <DashboardTopNav userRole={result.user?.role ?? undefined}>
           {children}
         </DashboardTopNav>
       </main>
+      <MobileNav userRole={result.user?.role ?? undefined} />
     </div>
   );
 }
