@@ -97,6 +97,12 @@ export default async function LideresPage() {
                       <p className="text-sm text-muted-foreground mt-1 truncate">
                         {leader.email}
                       </p>
+                      {leader.coordinatorName && (
+                        <p className="text-sm mt-1 truncate">
+                          <span className="text-muted-foreground">Coordenador: </span>
+                          <span className="text-[#f59e0b] font-medium">{leader.coordinatorName}</span>
+                        </p>
+                      )}
                     </div>
                     {getStatusBadge(leader.banned, leader.invitationStatus)}
                   </div>

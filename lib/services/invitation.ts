@@ -9,6 +9,7 @@ import {
   voter,
 } from "@/db/schema";
 import { eq, and, gt, inArray, sql, count } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
@@ -1287,6 +1288,7 @@ export interface LeaderWithVoters {
   localAtuacao: string | null;
   banned: boolean;
   invitationStatus: string | null;
+  coordinatorName: string | null;
   voters: Array<{
     id: string;
     name: string;
@@ -1312,6 +1314,8 @@ export async function listLeadersWithVoters(
       conditions.push(eq(user.coordinatorId, coordinatorId));
     }
 
+    const coordinator = aliasedTable(user, "coordinator");
+
     const leaders = await db
       .select({
         id: user.id,
@@ -1325,8 +1329,10 @@ export async function listLeadersWithVoters(
         section: user.section,
         localAtuacao: user.localAtuacao,
         banned: user.banned,
+        coordinatorName: coordinator.name,
       })
       .from(user)
+      .leftJoin(coordinator, eq(user.coordinatorId, coordinator.id))
       .where(and(...conditions));
 
     const leaderEmails = leaders.map((l) => l.email);
@@ -1389,6 +1395,7 @@ export async function listLeadersWithVoters(
           zone: leader.zone || null,
           section: leader.section || null,
           invitationStatus,
+          coordinatorName: leader.coordinatorName || null,
           voters,
         };
       })

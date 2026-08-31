@@ -227,7 +227,7 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
               {voter.leaderName && (
                 <div>
                   <span className="text-muted-foreground">Líder: </span>
-                  <span>{voter.leaderName}</span>
+                  <span className="text-[#f59e0b] font-medium">{voter.leaderName}</span>
                 </div>
               )}
             </div>
