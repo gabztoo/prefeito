@@ -136,6 +136,7 @@ export interface CompleteRegistrationInput {
   cpf?: string;
   rg?: string;
   address?: string;
+  cep?: string;
   zone?: string;
   section?: string;
   voterTitle?: string;
@@ -200,6 +201,7 @@ export async function completeCoordinatorRegistration(
         cpf: input.cpf || null,
         rg: input.rg || null,
         address: input.address || null,
+        cep: input.cep || null,
         zone: input.zone || null,
         section: input.section || null,
         voterTitle: input.voterTitle || null,
@@ -303,6 +305,7 @@ export async function completeLeaderRegistration(
         coordinatorId: tokenRecord.coordinatorId,
         cpf: input.cpf || null,
         address: input.address || null,
+        cep: input.cep || null,
         zone: input.zone || null,
         section: input.section || null,
         voterTitle: input.voterTitle || null,

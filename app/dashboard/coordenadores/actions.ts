@@ -21,6 +21,7 @@ export async function inviteCoordinatorAction(data: {
   rg?: string;
   cpf?: string;
   address?: string;
+  cep?: string;
   imageUrl?: string;
   voterTitle?: string;
   zone?: string;
@@ -53,6 +54,7 @@ export async function inviteCoordinatorAction(data: {
     rg: data.rg,
     cpf: data.cpf,
     address: data.address,
+    cep: data.cep,
     imageUrl: data.imageUrl,
     voterTitle: data.voterTitle,
     zone: data.zone,

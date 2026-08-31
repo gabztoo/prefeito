@@ -10,6 +10,7 @@ export async function submitLeaderRegistrationAction(
     password: string;
     cpf?: string;
     address?: string;
+    cep?: string;
     zone?: string;
     section?: string;
     voterTitle?: string;
@@ -23,6 +24,7 @@ export async function submitLeaderRegistrationAction(
     password: data.password,
     cpf: data.cpf,
     address: data.address,
+    cep: data.cep,
     zone: data.zone,
     section: data.section,
     voterTitle: data.voterTitle,

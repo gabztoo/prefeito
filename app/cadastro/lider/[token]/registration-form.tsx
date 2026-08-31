@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +23,7 @@ const leaderFormSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(12, "A senha deve ter pelo menos 12 caracteres").max(128),
   cpf: z.string().optional(),
+  cep: z.string().optional(),
   address: z.string().optional(),
   zone: z.string().regex(/^\d{1,4}$/, "Zona deve conter apenas dígitos (1-4 caracteres)").optional().or(z.literal("")),
   section: z.string().regex(/^\d{1,4}$/, "Seção deve conter apenas dígitos (1-4 caracteres)").optional().or(z.literal("")),
@@ -48,6 +49,7 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
       email: "",
       password: "",
       cpf: "",
+      cep: "",
       address: "",
       zone: "",
       section: "",
@@ -55,6 +57,20 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
       localAtuacao: "",
     },
   });
+
+  const handleCepChange = useCallback(async (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    form.setValue("cep", digits);
+    if (digits.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          form.setValue("address", `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}, `);
+        }
+      } catch {}
+    }
+  }, [form]);
 
   async function onSubmit(data: LeaderFormValues) {
     setIsSubmitting(true);
@@ -66,6 +82,7 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
         email: data.email,
         password: data.password,
         cpf: data.cpf || undefined,
+        cep: data.cep || undefined,
         address: data.address || undefined,
         zone: data.zone || undefined,
         section: data.section || undefined,
@@ -190,23 +207,45 @@ export function LeaderRegistrationForm({ token }: LeaderRegistrationFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="address">Endereço</FormLabel>
-              <FormControl>
-                <Input
-                  id="address"
-                  placeholder="Rua, número, bairro, cidade - UF"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="cep"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="cep">CEP</FormLabel>
+                <FormControl>
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    maxLength={8}
+                    value={field.value}
+                    onChange={(e) => handleCepChange(e.target.value)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="address">Endereço</FormLabel>
+                <FormControl>
+                  <Input
+                    id="address"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

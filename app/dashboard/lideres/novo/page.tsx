@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { inviteLeaderAction } from "../actions";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ export default function NovoLiderPage() {
   const [zone, setZone] = useState("");
   const [section, setSection] = useState("");
   const [address, setAddress] = useState("");
+  const [cep, setCep] = useState("");
   const [localAtuacao, setLocalAtuacao] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -37,6 +38,20 @@ export default function NovoLiderPage() {
     setLogin(generateLogin(first, last));
   };
 
+  const handleCepChange = useCallback(async (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    setCep(digits);
+    if (digits.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setAddress(`${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}, `);
+        }
+      } catch {}
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -50,6 +65,7 @@ export default function NovoLiderPage() {
         zone,
         section,
         address,
+        cep,
         localAtuacao,
       });
 
@@ -136,14 +152,27 @@ export default function NovoLiderPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                  id="address"
-                  placeholder="Rua, número, bairro, cidade - UF"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    value={cep}
+                    onChange={(e) => handleCepChange(e.target.value)}
+                    maxLength={8}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

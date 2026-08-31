@@ -27,6 +27,7 @@ export const user = pgTable("user", {
   coordinatorId: text("coordinatorId"),
   rg: text("rg"),
   cpf: text("cpf"),
+  cep: text("cep"),
   address: text("address"),
   imageUrl: text("imageUrl"),
   voterTitle: text("voterTitle"),

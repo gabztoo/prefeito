@@ -157,6 +157,12 @@ export default async function CoordenadoresPage() {
                       </span>
                     </div>
                   </div>
+                  {coordinator.cep && (
+                    <div className="text-sm mb-2">
+                      <span className="text-muted-foreground">CEP: </span>
+                      <span>{coordinator.cep}</span>
+                    </div>
+                  )}
                   {coordinator.address && (
                     <div className="text-sm mb-4">
                       <span className="text-muted-foreground">Endereço: </span>
@@ -191,6 +197,12 @@ export default async function CoordenadoresPage() {
                                 <div>
                                   <span>CPF: </span>
                                   <span>{leader.cpf}</span>
+                                </div>
+                              )}
+                              {leader.cep && (
+                                <div>
+                                  <span>CEP: </span>
+                                  <span>{leader.cep}</span>
                                 </div>
                               )}
                               {leader.voterTitle && (

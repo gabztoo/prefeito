@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { inviteCoordinatorAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ export default function NovoCoordenadorPage() {
   const [rg, setRg] = useState("");
   const [cpf, setCpf] = useState("");
   const [address, setAddress] = useState("");
+  const [cep, setCep] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [voterTitle, setVoterTitle] = useState("");
   const [zone, setZone] = useState("");
@@ -41,6 +42,20 @@ export default function NovoCoordenadorPage() {
     setLogin(generateLogin(first, last));
   };
 
+  const handleCepChange = useCallback(async (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    setCep(digits);
+    if (digits.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setAddress(`${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}, `);
+        }
+      } catch {}
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -53,6 +68,7 @@ export default function NovoCoordenadorPage() {
         rg,
         cpf,
         address,
+        cep,
         imageUrl,
         voterTitle,
         zone,
@@ -170,14 +186,27 @@ export default function NovoCoordenadorPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                  id="address"
-                  placeholder="Rua, número, bairro, cidade - UF"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    value={cep}
+                    onChange={(e) => handleCepChange(e.target.value)}
+                    maxLength={8}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    placeholder="Rua, número, bairro, cidade - UF"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

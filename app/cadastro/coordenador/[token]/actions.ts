@@ -11,6 +11,7 @@ export async function submitCoordinatorRegistrationAction(
     cpf?: string;
     rg?: string;
     address?: string;
+    cep?: string;
     zone?: string;
     section?: string;
     voterTitle?: string;
@@ -24,6 +25,7 @@ export async function submitCoordinatorRegistrationAction(
     cpf: data.cpf,
     rg: data.rg,
     address: data.address,
+    cep: data.cep,
     zone: data.zone,
     section: data.section,
     voterTitle: data.voterTitle,

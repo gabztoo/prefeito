@@ -24,6 +24,7 @@ export async function inviteLeaderAction(data: {
   zone?: string;
   section?: string;
   address?: string;
+  cep?: string;
   localAtuacao?: string;
 }): Promise<ActionResult<{ id: string }>> {
   const result = await auth.api.getSession({
@@ -55,6 +56,7 @@ export async function inviteLeaderAction(data: {
     zone: data.zone,
     section: data.section,
     address: data.address,
+    cep: data.cep,
     localAtuacao: data.localAtuacao,
   });
 

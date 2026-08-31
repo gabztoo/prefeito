@@ -67,6 +67,7 @@ export interface InviteLeaderInput {
   zone?: string;
   section?: string;
   address?: string;
+  cep?: string;
   localAtuacao?: string;
 }
 
@@ -77,6 +78,7 @@ export interface InviteCoordinatorInput {
   rg?: string;
   cpf?: string;
   address?: string;
+  cep?: string;
   imageUrl?: string;
   voterTitle?: string;
   zone?: string;
@@ -383,6 +385,7 @@ export async function inviteLeader(
       zone: input.zone || null,
       section: input.section || null,
       address: input.address || null,
+      cep: input.cep || null,
       localAtuacao: input.localAtuacao || null,
       ...getLeaderProvisioningState(),
     });
@@ -802,6 +805,7 @@ export interface Coordinator {
   role: string | null;
   rg: string | null;
   cpf: string | null;
+  cep: string | null;
   address: string | null;
   voterTitle: string | null;
   zone: string | null;
@@ -829,6 +833,7 @@ export async function listCoordinators(): Promise<
         role: user.role,
         rg: user.rg,
         cpf: user.cpf,
+        cep: user.cep,
         address: user.address,
         voterTitle: user.voterTitle,
         zone: user.zone,
@@ -916,6 +921,7 @@ export async function inviteCoordinator(
             rg: input.rg || null,
             cpf: input.cpf || null,
             address: input.address || null,
+            cep: input.cep || null,
             imageUrl: input.imageUrl || null,
             voterTitle: input.voterTitle || null,
             zone: input.zone || null,
@@ -960,6 +966,7 @@ export async function inviteCoordinator(
       rg: input.rg || null,
       cpf: input.cpf || null,
       address: input.address || null,
+      cep: input.cep || null,
       imageUrl: input.imageUrl || null,
       voterTitle: input.voterTitle || null,
       zone: input.zone || null,
@@ -1116,6 +1123,7 @@ export interface LeaderWithVoterCount {
   name: string;
   email: string;
   cpf: string | null;
+  cep: string | null;
   address: string | null;
   voterTitle: string | null;
   zone: string | null;
@@ -1141,6 +1149,7 @@ export async function listLeadersWithVoterCount(
         name: user.name,
         email: user.email,
         cpf: user.cpf,
+        cep: user.cep,
         address: user.address,
         voterTitle: user.voterTitle,
         zone: user.zone,
@@ -1181,6 +1190,8 @@ export async function listLeadersWithVoterCount(
 
         return {
           ...leader,
+          cpf: leader.cpf || null,
+          cep: leader.cep || null,
           address: leader.address || null,
           voterTitle: leader.voterTitle || null,
           localAtuacao: leader.localAtuacao || null,
@@ -1212,6 +1223,7 @@ export interface CoordinatorWithHierarchy {
   email: string;
   rg: string | null;
   cpf: string | null;
+  cep: string | null;
   address: string | null;
   voterTitle: string | null;
   zone: string | null;
@@ -1267,6 +1279,7 @@ export interface LeaderWithVoters {
   name: string;
   email: string;
   cpf: string | null;
+  cep: string | null;
   address: string | null;
   voterTitle: string | null;
   zone: string | null;
@@ -1305,6 +1318,7 @@ export async function listLeadersWithVoters(
         name: user.name,
         email: user.email,
         cpf: user.cpf,
+        cep: user.cep,
         address: user.address,
         voterTitle: user.voterTitle,
         zone: user.zone,
