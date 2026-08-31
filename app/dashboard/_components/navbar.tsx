@@ -18,6 +18,7 @@ import {
   Users,
   Menu,
   Shield,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -61,7 +62,7 @@ export default function DashboardTopNav({
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-[#1e40af] px-3 lg:h-[52px] lg:px-5 lg:bg-background lg:border-b">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-[#1e40af] px-3 lg:h-[52px] lg:px-5">
         <Sheet>
           <SheetTrigger asChild>
             <Button
@@ -107,8 +108,12 @@ export default function DashboardTopNav({
         >
           Hermes
         </Link>
-        <div className="ml-auto">
-          <UserProfile mini={true} />
+        <div className="ml-auto flex items-center gap-3">
+          <button className="relative text-white/80 hover:text-white transition-colors" aria-label="Notificações">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#06b6d4]" />
+          </button>
+          <UserProfile topnav />
         </div>
       </header>
       {children}
