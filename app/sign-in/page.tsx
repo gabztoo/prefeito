@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { User, Lock } from "lucide-react";
+import Image from "next/image";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -76,9 +77,15 @@ export default function SignIn() {
 
   return (
     <main
-      className="flex flex-col justify-center items-center w-full min-h-screen bg-contain bg-center bg-no-repeat p-4"
-      style={{ backgroundImage: "url('/bglogin2.jpg')" }}
+      className="flex flex-col justify-center items-center w-full min-h-screen bg-white p-4"
     >
+      <Image
+        src="/logowl.png"
+        alt="Logo"
+        width={140}
+        height={60}
+        className="mb-6 object-contain"
+      />
       <Card className="max-w-xs w-full shadow-xl border-0 rounded-xl">
         <CardHeader className="text-center space-y-2 pt-6">
           <CardTitle className="text-xl font-bold text-gray-800">
