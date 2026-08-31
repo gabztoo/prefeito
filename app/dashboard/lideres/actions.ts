@@ -8,6 +8,7 @@ import {
   completePasswordReset,
   deactivateLeader,
   deleteLeader,
+  resetUserPassword,
 } from "@/lib/services/invitation";
 import {
   generateRegistrationToken,
@@ -263,6 +264,46 @@ export async function listLeaderLinksAction(): Promise<
   }
 
   return listRegistrationTokens(result.session.userId, result.user?.role || "admin");
+}
+
+export async function resetLeaderPasswordAction(
+  leaderId: string
+): Promise<ActionResult<{ id: string }>> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para resetar senhas",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem resetar senhas de líderes",
+    };
+  }
+
+  const resetResult = await resetUserPassword(leaderId, result.session.userId);
+
+  if (resetResult.ok) {
+    revalidatePath("/dashboard/lideres");
+    await logAuditEvent({
+      action: "update",
+      entity: "user",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: resetResult.data.id,
+      metadata: { operation: "reset_password" },
+    });
+  }
+
+  return resetResult;
 }
 
 export async function deleteLeaderAction(

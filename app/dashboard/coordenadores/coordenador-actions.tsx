@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { TrashIcon, BanIcon } from "lucide-react";
+import { ResetPasswordDialog } from "../_components/reset-password-dialog";
 import {
   deactivateCoordinatorAction,
   deleteCoordinatorAction,
+  resetCoordinatorPasswordAction,
 } from "./actions";
 
 export function CoordenadorActions({
@@ -58,7 +60,13 @@ export function CoordenadorActions({
   }
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 items-center">
+      <ResetPasswordDialog
+        userId={coordinatorId}
+        entityLabel="este coordenador"
+        disabled={disabled}
+        onReset={resetCoordinatorPasswordAction}
+      />
       <Button
         type="button"
         variant="destructive"

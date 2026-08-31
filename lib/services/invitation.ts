@@ -285,6 +285,124 @@ export async function completeInitialPasswordChange(
   }
 }
 
+export async function resetUserPassword(
+  targetUserId: string,
+  adminId: string
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [admin] = await tx
+        .select({ role: user.role })
+        .from(user)
+        .where(eq(user.id, adminId))
+        .limit(1);
+
+      if (admin?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem resetar senhas",
+        };
+      }
+
+      const [targetUser] = await tx
+        .select({ id: user.id, role: user.role, banned: user.banned })
+        .from(user)
+        .where(eq(user.id, targetUserId))
+        .limit(1);
+
+      if (!targetUser) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Usuário não encontrado",
+        };
+      }
+
+      if (targetUser.role !== "leader" && targetUser.role !== "coordinator") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Só é possível resetar a senha de líderes ou coordenadores",
+        };
+      }
+
+      if (targetUser.banned) {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Reative o usuário antes de resetar a senha",
+        };
+      }
+
+      const lockId = getLockId(targetUserId);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockId})`);
+
+      const [credentialAccount] = await tx
+        .select({ id: account.id, password: account.password })
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, targetUserId),
+            eq(account.accountId, targetUserId),
+            eq(account.providerId, "credential"),
+            eq(account.issuer, "local:credential")
+          )
+        )
+        .limit(1);
+
+      if (!credentialAccount?.password) {
+        return {
+          ok: false,
+          code: "INTERNAL_ERROR",
+          message: "Não foi possível localizar a conta de acesso.",
+        };
+      }
+
+      const passwordHash = await hashPassword(LEADER_DEFAULT_PASSWORD);
+
+      const now = new Date();
+      await tx
+        .update(account)
+        .set({ password: passwordHash, updatedAt: now })
+        .where(eq(account.id, credentialAccount.id));
+
+      await tx
+        .update(user)
+        .set({
+          mustChangePassword: true,
+          emailVerified: true,
+          updatedAt: now,
+        })
+        .where(eq(user.id, targetUserId));
+
+      await tx
+        .update(invitation)
+        .set({
+          status: InvitationStatus.ACCEPTED,
+          acceptedAt: now,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(invitation.userId, targetUserId),
+            eq(invitation.status, InvitationStatus.PENDING)
+          )
+        );
+
+      await tx.delete(session).where(eq(session.userId, targetUserId));
+
+      return { ok: true, data: { id: targetUserId } };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Não foi possível resetar a senha. Tente novamente.",
+    };
+  }
+}
+
 export function getLockId(userId: string): bigint {
   const hash = crypto.createHash("sha256").update(userId).digest();
   const first8Bytes = hash.subarray(0, 8);

@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { TrashIcon, BanIcon } from "lucide-react";
+import { ResetPasswordDialog } from "../_components/reset-password-dialog";
 import {
   deactivateLeaderAction,
   deleteLeaderAction,
+  resetLeaderPasswordAction,
 } from "./actions";
 
 export function LeaderActions({
@@ -56,7 +58,15 @@ export function LeaderActions({
   }
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 items-center">
+      {isAdmin && (
+        <ResetPasswordDialog
+          userId={leaderId}
+          entityLabel="este líder"
+          disabled={disabled}
+          onReset={resetLeaderPasswordAction}
+        />
+      )}
       <Button
         type="button"
         variant="destructive"
