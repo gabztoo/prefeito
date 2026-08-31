@@ -109,7 +109,7 @@
         background-image: url('/bg.jpeg');
         background-size: contain;
         background-repeat: no-repeat;
-        background-position: center;
+        background-position: left top;
         background-attachment: fixed;
     }
     button,
