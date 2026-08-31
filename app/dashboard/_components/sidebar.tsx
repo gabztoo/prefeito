@@ -91,7 +91,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
       <div className="absolute inset-0 bg-[#1a3a8a]/10" />
       <div className="relative flex h-full flex-col z-10">
         <nav className="flex flex-col h-full justify-between items-start w-full">
-          <div className="w-full space-y-1 px-4 pt-[260px]">
+          <div className="w-full space-y-1 px-4 pt-[200px]">
             {filteredNavItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -117,7 +117,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             })}
           </div>
 
-          <div className="flex flex-col gap-1 w-full pb-4">
+          <div className="flex flex-col gap-1 w-full pb-[200px]">
             <div className="px-4">
               <Link
                 href="/dashboard/settings"
