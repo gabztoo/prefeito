@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import { formatCpf } from "@/lib/services/cpf";
 
 export default function NovoCoordenadorPage() {
   const [firstName, setFirstName] = useState("");
@@ -183,8 +184,10 @@ export default function NovoCoordenadorPage() {
                   <Input
                     id="cpf"
                     placeholder="123.456.789-00"
-                    value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
+                    value={cpf ? formatCpf(cpf) : ""}
+                    onChange={(e) =>
+                      setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))
+                    }
                   />
                 </div>
               </div>

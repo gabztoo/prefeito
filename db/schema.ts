@@ -45,6 +45,7 @@ export const user = pgTable("user", {
     columns: [table.coordinatorId],
     foreignColumns: [table.id],
   }).onDelete("set null"),
+  userCpfUnique: unique("user_cpf_unique").on(table.cpf),
 }));
 
 export const session = pgTable("session", {

@@ -10,6 +10,7 @@ export type ActionResult<T> =
         | "CAMPAIGN_CLOSED"
         | "LINK_INACTIVE"
         | "DUPLICATE_PHONE"
+        | "DUPLICATE_CPF"
         | "RATE_LIMITED"
         | "INTERNAL_ERROR"
         | "INVALID_TRANSITION";

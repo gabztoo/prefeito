@@ -5,6 +5,8 @@ import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
 import { z } from "zod";
 import { getLeaderUsername, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "./invitation";
+import { normalizeCpf } from "./cpf";
+import { isCpfRegistered } from "./cpf-registry";
 
 export const PASSWORD_SCHEMA = z
   .string()
@@ -195,6 +197,8 @@ export async function completeCoordinatorRegistration(
     const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(-1)[0] || input.name);
     const loginEmail = `${login}@prefeito.local`;
 
+    const normalizedCpf = normalizeCpf(input.cpf);
+
     const [existingUser] = await db
       .select()
       .from(user)
@@ -209,6 +213,14 @@ export async function completeCoordinatorRegistration(
       };
     }
 
+    if (normalizedCpf && (await isCpfRegistered(normalizedCpf))) {
+      return {
+        ok: false,
+        code: "DUPLICATE_CPF",
+        message: "CPF já cadastrado no sistema.",
+      };
+    }
+
     const userId = crypto.randomUUID();
 
     return await db.transaction(async (tx) => {
@@ -219,7 +231,7 @@ export async function completeCoordinatorRegistration(
         name: input.name,
         role: "coordinator",
         emailVerified: true,
-        cpf: input.cpf || null,
+        cpf: normalizedCpf,
         rg: input.rg || null,
         address: input.address || null,
         cep: input.cep || null,
@@ -299,6 +311,8 @@ export async function completeLeaderRegistration(
     const login = getLeaderUsername(input.name.split(" ")[0] || input.name, input.name.split(" ").slice(-1)[0] || input.name);
     const loginEmail = `${login}@prefeito.local`;
 
+    const normalizedCpf = normalizeCpf(input.cpf);
+
     const [existingUser] = await db
       .select()
       .from(user)
@@ -313,6 +327,14 @@ export async function completeLeaderRegistration(
       };
     }
 
+    if (normalizedCpf && (await isCpfRegistered(normalizedCpf))) {
+      return {
+        ok: false,
+        code: "DUPLICATE_CPF",
+        message: "CPF já cadastrado no sistema.",
+      };
+    }
+
     const userId = crypto.randomUUID();
 
     return await db.transaction(async (tx) => {
@@ -324,7 +346,7 @@ export async function completeLeaderRegistration(
         role: "leader",
         emailVerified: true,
         coordinatorId: tokenRecord.coordinatorId,
-        cpf: input.cpf || null,
+        cpf: normalizedCpf,
         address: input.address || null,
         cep: input.cep || null,
         zone: input.zone || null,

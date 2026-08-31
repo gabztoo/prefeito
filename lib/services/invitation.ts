@@ -17,6 +17,8 @@ import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { normalizeCpf } from "./cpf";
+import { isCpfRegistered } from "./cpf-registry";
 
 export const LEADER_DEFAULT_PASSWORD = "12345678";
 
@@ -1034,13 +1036,22 @@ export async function inviteCoordinator(
 
     if (existingUser) {
       if (existingUser.banReason === "pending-invite") {
+        const normalizedCpf = normalizeCpf(input.cpf);
+        if (normalizedCpf && (await isCpfRegistered(normalizedCpf, existingUser.id))) {
+          return {
+            ok: false,
+            code: "DUPLICATE_CPF",
+            message: "CPF já cadastrado no sistema.",
+          };
+        }
+
         await db
           .update(user)
           .set({
             ...getLeaderProvisioningState(),
             role: "coordinator",
             rg: input.rg || null,
-            cpf: input.cpf || null,
+            cpf: normalizedCpf,
             address: input.address || null,
             cep: input.cep || null,
             imageUrl: input.imageUrl || null,
@@ -1076,6 +1087,15 @@ export async function inviteCoordinator(
       }
     }
 
+    const normalizedCpf = normalizeCpf(input.cpf);
+    if (normalizedCpf && (await isCpfRegistered(normalizedCpf))) {
+      return {
+        ok: false,
+        code: "DUPLICATE_CPF",
+        message: "CPF já cadastrado no sistema.",
+      };
+    }
+
     const userId = crypto.randomUUID();
     await db.insert(user).values({
       id: userId,
@@ -1085,7 +1105,7 @@ export async function inviteCoordinator(
       role: "coordinator",
       emailVerified: true,
       rg: input.rg || null,
-      cpf: input.cpf || null,
+      cpf: normalizedCpf,
       address: input.address || null,
       cep: input.cep || null,
       imageUrl: input.imageUrl || null,
