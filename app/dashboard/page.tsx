@@ -7,6 +7,7 @@ import {
   BarChart3,
   CheckCircle2,
   MailWarning,
+  Shield,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,17 @@ export default async function Dashboard() {
       href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/eleitores",
       icon: Users,
     },
+    ...(isAdmin
+      ? [
+          {
+            label: "Coordenadores ativos",
+            value: stats?.activeCoordinators,
+            description: "Com acesso ativo",
+            href: "/dashboard/coordenadores",
+            icon: Shield,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -163,9 +175,9 @@ export default async function Dashboard() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={`grid gap-4 sm:grid-cols-2 ${isAdmin ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
           {metrics.map(({ label, value, description, href, icon: Icon }, index) => {
-            const borderColors = ["border-b-[#1e40af]", "border-b-[#06b6d4]", "border-b-[#f59e0b]"];
+            const borderColors = ["border-b-[#1e40af]", "border-b-[#06b6d4]", "border-b-[#f59e0b]", "border-b-[#10b981]"];
             return (
               <Link
                 key={label}

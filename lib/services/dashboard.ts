@@ -4,7 +4,7 @@ import {
   listCampaigns,
   listLeaderCampaignLinks,
 } from "@/lib/services/campaign";
-import { listLeaders, listLeadersByCoordinator } from "@/lib/services/invitation";
+import { listCoordinators, listLeaders, listLeadersByCoordinator } from "@/lib/services/invitation";
 import { getVoterStats } from "@/lib/services/voter";
 import { db } from "@/db/drizzle";
 import { campaign, campaign_leader, invitation, voter, user } from "@/db/schema";
@@ -25,6 +25,7 @@ export interface DashboardStats {
   recentVoters: number;
   activeCampaigns: number;
   activeLeaders: number;
+  activeCoordinators: number;
   activeLinks: number;
   pendingInvitations: number;
   draftCampaigns: number;
@@ -196,8 +197,10 @@ export async function getDashboardStats(
 
     if (role === "admin") {
       const leadersResult = scopeResult as Awaited<ReturnType<typeof listLeaders>>;
+      const coordinatorsResult = await listCoordinators();
 
       if (!leadersResult.ok) return leadersResult;
+      if (!coordinatorsResult.ok) return coordinatorsResult;
 
       return {
         ok: true,
@@ -207,6 +210,9 @@ export async function getDashboardStats(
           activeCampaigns: Number(campaignsResult.data.total),
           activeLeaders: leadersResult.data.leaders.filter(
             (leader) => !leader.banned && leader.invitationStatus === "accepted"
+          ).length,
+          activeCoordinators: coordinatorsResult.data.coordinators.filter(
+            (coordinator) => !coordinator.banned && coordinator.invitationStatus === "accepted"
           ).length,
           activeLinks: 0,
           pendingInvitations: Number(pendingInvitationResult[0]?.count ?? 0),
@@ -236,6 +242,7 @@ export async function getDashboardStats(
           activeLeaders: leadersResult.data.leaders.filter(
             (leader) => !leader.banned && leader.invitationStatus === "accepted"
           ).length,
+          activeCoordinators: 0,
           activeLinks: 0,
           pendingInvitations: Number(pendingInvitationResult[0]?.count ?? 0),
           draftCampaigns: Number(draftCampaignResult[0]?.count ?? 0),
@@ -263,6 +270,7 @@ export async function getDashboardStats(
         recentVoters: Number(recentVoterResult[0]?.count ?? 0),
         activeCampaigns: Number(campaignsResult.data.total),
         activeLeaders: 0,
+        activeCoordinators: 0,
         activeLinks: linksResult.data.length,
         pendingInvitations: Number(pendingInvitationResult[0]?.count ?? 0),
         draftCampaigns: Number(draftCampaignResult[0]?.count ?? 0),
