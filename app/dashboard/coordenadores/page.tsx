@@ -113,10 +113,22 @@ export default async function CoordenadoresPage() {
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+                    {coordinator.rg && (
+                      <div>
+                        <span className="text-muted-foreground">RG: </span>
+                        <span>{coordinator.rg}</span>
+                      </div>
+                    )}
                     {coordinator.cpf && (
                       <div>
                         <span className="text-muted-foreground">CPF: </span>
                         <span>{coordinator.cpf}</span>
+                      </div>
+                    )}
+                    {coordinator.voterTitle && (
+                      <div>
+                        <span className="text-muted-foreground">Título: </span>
+                        <span>{coordinator.voterTitle}</span>
                       </div>
                     )}
                     {coordinator.zone && (
@@ -145,6 +157,12 @@ export default async function CoordenadoresPage() {
                       </span>
                     </div>
                   </div>
+                  {coordinator.address && (
+                    <div className="text-sm mb-4">
+                      <span className="text-muted-foreground">Endereço: </span>
+                      <span>{coordinator.address}</span>
+                    </div>
+                  )}
 
                   {coordinator.leaders.length > 0 && (
                     <div className="mt-auto">
@@ -175,6 +193,12 @@ export default async function CoordenadoresPage() {
                                   <span>{leader.cpf}</span>
                                 </div>
                               )}
+                              {leader.voterTitle && (
+                                <div>
+                                  <span>Título: </span>
+                                  <span>{leader.voterTitle}</span>
+                                </div>
+                              )}
                               {leader.zone && (
                                 <div>
                                   <span>Zona: </span>
@@ -192,6 +216,12 @@ export default async function CoordenadoresPage() {
                                 <span>{leader.voterCount}</span>
                               </div>
                             </div>
+                            {leader.address && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                <span>Endereço: </span>
+                                <span>{leader.address}</span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

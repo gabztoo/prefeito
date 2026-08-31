@@ -208,6 +208,7 @@ export async function listVoters(
       zone: string;
       section: string;
       phone: string;
+      voterTitle: string | null;
       campaignId: string;
       campaignLeaderId: string;
       createdAt: Date;

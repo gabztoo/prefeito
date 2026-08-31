@@ -800,6 +800,13 @@ export interface Coordinator {
   name: string;
   email: string;
   role: string | null;
+  rg: string | null;
+  cpf: string | null;
+  address: string | null;
+  voterTitle: string | null;
+  zone: string | null;
+  section: string | null;
+  localAtuacao: string | null;
   banned: boolean;
   banReason: string | null;
   createdAt: Date;
@@ -820,6 +827,13 @@ export async function listCoordinators(): Promise<
         name: user.name,
         email: user.email,
         role: user.role,
+        rg: user.rg,
+        cpf: user.cpf,
+        address: user.address,
+        voterTitle: user.voterTitle,
+        zone: user.zone,
+        section: user.section,
+        localAtuacao: user.localAtuacao,
         banned: user.banned,
         banReason: user.banReason,
         createdAt: user.createdAt,
@@ -1101,9 +1115,12 @@ export interface LeaderWithVoterCount {
   id: string;
   name: string;
   email: string;
+  cpf: string | null;
+  address: string | null;
+  voterTitle: string | null;
   zone: string | null;
   section: string | null;
-  cpf: string | null;
+  localAtuacao: string | null;
   phone: string | null;
   voterCount: number;
   banned: boolean;
@@ -1123,9 +1140,12 @@ export async function listLeadersWithVoterCount(
         id: user.id,
         name: user.name,
         email: user.email,
+        cpf: user.cpf,
+        address: user.address,
+        voterTitle: user.voterTitle,
         zone: user.zone,
         section: user.section,
-        cpf: user.cpf,
+        localAtuacao: user.localAtuacao,
         banned: user.banned,
       })
       .from(user)
@@ -1161,6 +1181,9 @@ export async function listLeadersWithVoterCount(
 
         return {
           ...leader,
+          address: leader.address || null,
+          voterTitle: leader.voterTitle || null,
+          localAtuacao: leader.localAtuacao || null,
           phone: null,
           voterCount,
         };
@@ -1187,9 +1210,13 @@ export interface CoordinatorWithHierarchy {
   id: string;
   name: string;
   email: string;
+  rg: string | null;
   cpf: string | null;
+  address: string | null;
+  voterTitle: string | null;
   zone: string | null;
   section: string | null;
+  localAtuacao: string | null;
   banned: boolean;
   invitationStatus: string | null;
   leaders: LeaderWithVoterCount[];
@@ -1214,9 +1241,6 @@ export async function listCoordinatorsWithHierarchy(): Promise<
 
         return {
           ...coordinator,
-          cpf: null,
-          zone: null,
-          section: null,
           leaders,
         };
       })
@@ -1243,8 +1267,11 @@ export interface LeaderWithVoters {
   name: string;
   email: string;
   cpf: string | null;
+  address: string | null;
+  voterTitle: string | null;
   zone: string | null;
   section: string | null;
+  localAtuacao: string | null;
   banned: boolean;
   invitationStatus: string | null;
   voters: Array<{
@@ -1254,6 +1281,7 @@ export interface LeaderWithVoters {
     zone: string;
     section: string;
     phone: string;
+    voterTitle: string | null;
   }>;
 }
 
@@ -1277,8 +1305,11 @@ export async function listLeadersWithVoters(
         name: user.name,
         email: user.email,
         cpf: user.cpf,
+        address: user.address,
+        voterTitle: user.voterTitle,
         zone: user.zone,
         section: user.section,
+        localAtuacao: user.localAtuacao,
         banned: user.banned,
       })
       .from(user)
@@ -1315,6 +1346,7 @@ export async function listLeadersWithVoters(
           zone: string;
           section: string;
           phone: string;
+          voterTitle: string | null;
         }> = [];
 
         if (linkIds.length > 0) {
@@ -1325,6 +1357,7 @@ export async function listLeadersWithVoters(
               zone: voter.zone,
               section: voter.section,
               phone: voter.phone,
+              voterTitle: voter.voterTitle,
             })
             .from(voter)
             .where(inArray(voter.campaignLeaderId, linkIds))

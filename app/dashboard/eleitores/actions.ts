@@ -27,6 +27,7 @@ export async function listVotersAction(options?: {
       zone: string;
       section: string;
       phone: string;
+      voterTitle: string | null;
       campaignId: string;
       campaignLeaderId: string;
       createdAt: Date;

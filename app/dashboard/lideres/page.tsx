@@ -109,6 +109,12 @@ export default async function LideresPage() {
                         <span>{leader.cpf}</span>
                       </div>
                     )}
+                    {leader.voterTitle && (
+                      <div>
+                        <span className="text-muted-foreground">Título: </span>
+                        <span>{leader.voterTitle}</span>
+                      </div>
+                    )}
                     {leader.zone && (
                       <div>
                         <span className="text-muted-foreground">Zona: </span>
@@ -126,6 +132,18 @@ export default async function LideresPage() {
                       <span>{leader.voters.length}</span>
                     </div>
                   </div>
+                  {leader.address && (
+                    <div className="text-sm mb-4">
+                      <span className="text-muted-foreground">Endereço: </span>
+                      <span>{leader.address}</span>
+                    </div>
+                  )}
+                  {leader.localAtuacao && (
+                    <div className="text-sm mb-4">
+                      <span className="text-muted-foreground">Local de Atuação: </span>
+                      <span>{leader.localAtuacao}</span>
+                    </div>
+                  )}
 
                   {leader.voters.length > 0 && (
                     <div className="mt-auto">
@@ -144,6 +162,12 @@ export default async function LideresPage() {
                                 <div>
                                   <span>CPF: </span>
                                   <span>{voter.cpf}</span>
+                                </div>
+                              )}
+                              {voter.voterTitle && (
+                                <div>
+                                  <span>Título: </span>
+                                  <span>{voter.voterTitle}</span>
                                 </div>
                               )}
                               <div>

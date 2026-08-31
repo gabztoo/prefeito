@@ -24,6 +24,7 @@ interface Voter {
   zone: string;
   section: string;
   phone: string;
+  voterTitle: string | null;
   campaignId: string;
   campaignLeaderId: string;
   createdAt: Date;
@@ -204,6 +205,12 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
                   {voter.phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")}
                 </span>
               </div>
+              {voter.voterTitle && (
+                <div>
+                  <span className="text-muted-foreground">Título: </span>
+                  <span>{voter.voterTitle}</span>
+                </div>
+              )}
               <div>
                 <span className="text-muted-foreground">Zona: </span>
                 <span>{voter.zone}</span>
