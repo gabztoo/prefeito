@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteVoterAction, editVoterAction } from "./actions";
 import { PencilIcon, TrashIcon, LoaderIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -169,71 +168,65 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
   };
 
   return (
-    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {voters.map((voter) => (
-        <Card key={voter.id} className="flex flex-col">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <div className="min-w-0 flex-1">
-                <CardTitle className="text-lg truncate">{voter.name}</CardTitle>
-              </div>
-              {isAdmin && (
-                <div className="flex gap-1 shrink-0 ml-2">
-                  <EditVoterDialog voter={voter} />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(voter.id)}
-                    disabled={isPending}
-                    className="text-destructive hover:text-destructive"
-                    aria-label={`Excluir eleitor ${voter.name}`}
-                  >
-                    {isPending ? (
-                      <LoaderIcon className="size-4 animate-spin" />
-                    ) : (
-                      <TrashIcon className="size-4" />
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">Telefone: </span>
-                <span>
-                  {voter.phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")}
-                </span>
-              </div>
-              {voter.voterTitle && (
-                <div>
-                  <span className="text-muted-foreground">Título: </span>
-                  <span>{voter.voterTitle}</span>
-                </div>
-              )}
-              <div>
-                <span className="text-muted-foreground">Zona: </span>
-                <span>{voter.zone}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Seção: </span>
-                <span>{voter.section}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Cadastro: </span>
-                <span>{new Date(voter.createdAt).toLocaleDateString("pt-BR")}</span>
-              </div>
-              {voter.leaderName && (
-                <div>
-                  <span className="text-muted-foreground">Líder: </span>
+    <div className="mt-4 overflow-x-auto rounded-lg border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <th className="px-4 py-3">Nome</th>
+            <th className="hidden px-4 py-3 md:table-cell">Telefone</th>
+            <th className="hidden px-4 py-3 lg:table-cell">Título</th>
+            <th className="hidden px-4 py-3 sm:table-cell">Zona</th>
+            <th className="hidden px-4 py-3 sm:table-cell">Seção</th>
+            <th className="hidden px-4 py-3 md:table-cell">Cadastro</th>
+            <th className="hidden px-4 py-3 xl:table-cell">Líder</th>
+            {isAdmin && <th className="px-4 py-3 text-right">Ações</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {voters.map((voter) => (
+            <tr key={voter.id} className="border-b last:border-b-0 hover:bg-muted/30">
+              <td className="px-4 py-3 font-medium">{voter.name}</td>
+              <td className="hidden px-4 py-3 md:table-cell">
+                {voter.phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")}
+              </td>
+              <td className="hidden px-4 py-3 lg:table-cell">{voter.voterTitle || "-"}</td>
+              <td className="hidden px-4 py-3 sm:table-cell">{voter.zone}</td>
+              <td className="hidden px-4 py-3 sm:table-cell">{voter.section}</td>
+              <td className="hidden px-4 py-3 md:table-cell">
+                {new Date(voter.createdAt).toLocaleDateString("pt-BR")}
+              </td>
+              <td className="hidden px-4 py-3 xl:table-cell">
+                {voter.leaderName ? (
                   <span className="text-[#f59e0b] font-medium">{voter.leaderName}</span>
-                </div>
+                ) : (
+                  "-"
+                )}
+              </td>
+              {isAdmin && (
+                <td className="px-4 py-3 text-right">
+                  <div className="flex justify-end gap-1">
+                    <EditVoterDialog voter={voter} />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(voter.id)}
+                      disabled={isPending}
+                      className="text-destructive hover:text-destructive"
+                      aria-label={`Excluir eleitor ${voter.name}`}
+                    >
+                      {isPending ? (
+                        <LoaderIcon className="size-4 animate-spin" />
+                      ) : (
+                        <TrashIcon className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                </td>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

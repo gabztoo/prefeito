@@ -7,7 +7,6 @@ import {
   BarChart3,
   CheckCircle2,
   MailWarning,
-  UserPlus,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -136,7 +135,7 @@ export default async function Dashboard() {
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="relative overflow-hidden rounded-2xl border border-l-4 border-l-[#06b6d4] bg-card p-6 shadow-sm sm:p-8">
           <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 Visão geral
@@ -151,21 +150,6 @@ export default async function Dashboard() {
                   ? "Acompanhe seus líderes e cadastros do seu coordenadoramento."
                   : "Acompanhe os cadastros recebidos pelos seus links."}
               </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {isAdmin ? (
-                <Button asChild className="bg-[#f59e0b] hover:bg-[#d97706] text-white">
-                  <Link href="/dashboard/lideres/novo">
-                    <UserPlus aria-hidden="true" /> Convidar líder
-                  </Link>
-                </Button>
-              ) : isCoordinator ? (
-                <Button asChild className="bg-[#f59e0b] hover:bg-[#d97706] text-white">
-                  <Link href="/dashboard/lideres/novo">
-                    <UserPlus aria-hidden="true" /> Convidar líder
-                  </Link>
-                </Button>
-              ) : null}
             </div>
           </div>
         </header>
