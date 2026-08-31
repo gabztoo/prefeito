@@ -57,10 +57,10 @@ export default function SignIn() {
 
   return (
     <main
-      className="flex flex-col justify-center items-center w-full min-h-screen bg-cover bg-center bg-no-repeat p-4"
+      className="flex flex-col justify-center items-center w-full min-h-screen bg-contain bg-center bg-no-repeat p-4"
       style={{ backgroundImage: "url('/bglogin.jpeg')" }}
     >
-      <Card className="max-w-sm w-full shadow-xl border-0 rounded-xl">
+      <Card className="max-w-xs w-full shadow-xl border-0 rounded-xl">
         <CardHeader className="text-center space-y-2 pt-6">
           <CardTitle className="text-xl font-bold text-gray-800">
             Acesso Restrito
