@@ -134,7 +134,7 @@ export default async function Dashboard() {
   return (
     <section className="min-h-full w-full bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        <header className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        <header className="relative overflow-hidden rounded-2xl border border-l-4 border-l-[#06b6d4] bg-card p-6 shadow-sm sm:p-8">
           <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
