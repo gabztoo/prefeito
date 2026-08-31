@@ -79,7 +79,7 @@ export default function DashboardTopNav({
             <SheetHeader className="text-left">
               <SheetTitle className="sr-only">Hermes</SheetTitle>
               <Image
-                src="/logowl.png"
+                src="/wbranco.jpeg"
                 alt="Logo"
                 width={140}
                 height={50}

@@ -83,7 +83,7 @@ export default function SignIn() {
         <CardHeader className="text-center space-y-3 pt-6">
           <div className="flex justify-center">
             <Image
-              src="/logowl.png"
+              src="/wbranco.jpeg"
               alt="Logo"
               width={180}
               height={70}
