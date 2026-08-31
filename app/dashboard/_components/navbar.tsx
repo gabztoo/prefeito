@@ -77,7 +77,7 @@ export default function DashboardTopNav({
           </SheetTrigger>
           <SheetContent side="left" className="w-[min(20rem,85vw)]">
             <SheetHeader className="text-left">
-              <SheetTitle>Sistema Eleitoral</SheetTitle>
+              <SheetTitle>Hermes</SheetTitle>
               <SheetDescription>
                 Navegue pelo painel administrativo.
               </SheetDescription>
@@ -107,7 +107,7 @@ export default function DashboardTopNav({
           href="/dashboard"
           className="text-sm font-semibold min-[1024px]:hidden"
         >
-          Sistema Eleitoral
+          Hermes
         </Link>
         <div className="ml-auto">
           <UserProfile mini={true} />

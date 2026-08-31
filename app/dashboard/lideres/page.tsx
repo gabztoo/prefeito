@@ -1,12 +1,15 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { listLeaders, listLeadersByCoordinator } from "@/lib/services/invitation";
+import { listLeadersWithVoters } from "@/lib/services/invitation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from "next/link";
 import { LeaderActions } from "./leader-actions";
+import { GenerateLinkDialog } from "./generate-link-dialog";
+import { generateLeaderLinkAction } from "./actions";
 
 export default async function LideresPage() {
   const result = await auth.api.getSession({
@@ -22,8 +25,8 @@ export default async function LideresPage() {
   }
 
   const leadersResult = result.user?.role === "coordinator"
-    ? await listLeadersByCoordinator(result.session.userId)
-    : await listLeaders();
+    ? await listLeadersWithVoters(result.session.userId)
+    : await listLeadersWithVoters();
 
   if (!leadersResult.ok) {
     return (
@@ -68,9 +71,12 @@ export default async function LideresPage() {
           <p className="text-sm text-muted-foreground">
             {total} líder{total !== 1 ? "es" : ""} encontrado{total !== 1 ? "s" : ""}
           </p>
-          <Link href="/dashboard/lideres/novo">
-            <Button>Novo Convite</Button>
-          </Link>
+          <div className="flex gap-2">
+            <GenerateLinkDialog onGenerate={generateLeaderLinkAction} />
+            <Link href="/dashboard/lideres/novo">
+              <Button>Novo Convite</Button>
+            </Link>
+          </div>
         </div>
         <div className="mt-6 grid gap-4">
           {leaders.length === 0 ? (
@@ -96,16 +102,49 @@ export default async function LideresPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex gap-4 text-xs text-muted-foreground">
-                      <span>
-                        Criado em:{" "}
-                        {new Date(leader.createdAt).toLocaleDateString("pt-BR")}
-                      </span>
-                      {leader.banReason && (
-                        <span>Motivo: {leader.banReason}</span>
-                      )}
-                    </div>
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-4">
+                    {leader.cpf && <span>CPF: {leader.cpf}</span>}
+                    {leader.zone && <span>Zona: {leader.zone}</span>}
+                    {leader.section && <span>Seção: {leader.section}</span>}
+                    <span>
+                      Eleitores: {leader.voters.length}
+                    </span>
+                  </div>
+
+                  {leader.voters.length > 0 ? (
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="voters">
+                        <AccordionTrigger className="text-sm">
+                          Ver eleitores vinculados ({leader.voters.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid gap-3 mt-2">
+                            {leader.voters.map((voter) => (
+                              <div
+                                key={voter.id}
+                                className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
+                              >
+                                <div>
+                                  <p className="font-medium text-sm">{voter.name}</p>
+                                  <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                                    {voter.phone && <span>Tel: {voter.phone}</span>}
+                                    <span>Zona: {voter.zone}</span>
+                                    <span>Seção: {voter.section}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum eleitor vinculado
+                    </p>
+                  )}
+
+                  <div className="flex justify-end mt-4">
                     <LeaderActions leaderId={leader.id} disabled={leader.banned} />
                   </div>
                 </CardContent>

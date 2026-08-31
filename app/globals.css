@@ -106,6 +106,10 @@
         @apply bg-background text-foreground font-sans;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        background-image: url('/bg.jpeg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
     }
     button,
     input,

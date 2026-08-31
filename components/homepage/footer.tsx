@@ -1,35 +1,54 @@
 import Link from "next/link";
 
-const links = [
+const credits = [
   {
-    title: "X",
-    href: "https://www.x.com/rasmickyy",
+    label: "@sugiiartz",
+    href: "https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn",
   },
   {
-    title: "YouTube",
-    href: "https://www.youtube.com/@rasmic",
+    label: "@macae092",
+    href: "https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1",
   },
 ];
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
 
 export default function FooterSection() {
   return (
     <footer className="bg-background py-12">
       <div className="mx-auto max-w-5xl px-6">
-        <div className="flex flex-wrap justify-between gap-12">
-          <div className="order-last flex items-center gap-3 md:order-first">
-            <span className="text-muted-foreground block text-center text-sm">
-              © {new Date().getFullYear()} Exodus Labs, All rights reserved
-            </span>
-          </div>
-
-          <div className="order-first flex flex-wrap gap-x-6 gap-y-4 md:order-last">
-            {links.map((link, index) => (
+        <div className="flex flex-col items-center gap-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            Desenvolvido por
+          </p>
+          <div className="flex items-center gap-6">
+            {credits.map((credit, index) => (
               <Link
                 key={index}
-                href={link.href}
-                className="text-muted-foreground hover:text-primary block duration-150"
+                href={credit.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary flex items-center gap-2 duration-150"
               >
-                <span>{link.title}</span>
+                <InstagramIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">{credit.label}</span>
               </Link>
             ))}
           </div>

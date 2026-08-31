@@ -6,8 +6,9 @@ import {
   account,
   session,
   campaign_leader,
+  voter,
 } from "@/db/schema";
-import { eq, and, gt, inArray, sql } from "drizzle-orm";
+import { eq, and, gt, inArray, sql, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
 import crypto from "crypto";
@@ -1092,6 +1093,272 @@ export async function deactivateCoordinator(
       ok: false,
       code: "INTERNAL_ERROR",
       message: "Erro ao desativar coordenador",
+    };
+  }
+}
+
+export interface LeaderWithVoterCount {
+  id: string;
+  name: string;
+  email: string;
+  zone: string | null;
+  section: string | null;
+  cpf: string | null;
+  phone: string | null;
+  voterCount: number;
+  banned: boolean;
+}
+
+export async function listLeadersWithVoterCount(
+  coordinatorId: string
+): Promise<
+  ActionResult<{
+    leaders: LeaderWithVoterCount[];
+    total: number;
+  }>
+> {
+  try {
+    const leaders = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        zone: user.zone,
+        section: user.section,
+        cpf: user.cpf,
+        banned: user.banned,
+      })
+      .from(user)
+      .where(
+        and(
+          eq(user.role, "leader"),
+          eq(user.coordinatorId, coordinatorId)
+        )
+      );
+
+    const leadersWithCounts = await Promise.all(
+      leaders.map(async (leader) => {
+        const leaderLinks = await db
+          .select({ id: campaign_leader.id })
+          .from(campaign_leader)
+          .where(
+            and(
+              eq(campaign_leader.leaderId, leader.id),
+              eq(campaign_leader.active, true)
+            )
+          );
+
+        const linkIds = leaderLinks.map((l) => l.id);
+
+        let voterCount = 0;
+        if (linkIds.length > 0) {
+          const [{ total }] = await db
+            .select({ total: count() })
+            .from(voter)
+            .where(inArray(voter.campaignLeaderId, linkIds));
+          voterCount = Number(total);
+        }
+
+        return {
+          ...leader,
+          phone: null,
+          voterCount,
+        };
+      })
+    );
+
+    return {
+      ok: true,
+      data: {
+        leaders: leadersWithCounts,
+        total: leadersWithCounts.length,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao listar líderes",
+    };
+  }
+}
+
+export interface CoordinatorWithHierarchy {
+  id: string;
+  name: string;
+  email: string;
+  cpf: string | null;
+  zone: string | null;
+  section: string | null;
+  banned: boolean;
+  invitationStatus: string | null;
+  leaders: LeaderWithVoterCount[];
+}
+
+export async function listCoordinatorsWithHierarchy(): Promise<
+  ActionResult<{
+    coordinators: CoordinatorWithHierarchy[];
+    total: number;
+  }>
+> {
+  try {
+    const coordinatorsResult = await listCoordinators();
+    if (!coordinatorsResult.ok) {
+      return coordinatorsResult;
+    }
+
+    const coordinatorsWithHierarchy = await Promise.all(
+      coordinatorsResult.data.coordinators.map(async (coordinator) => {
+        const leadersResult = await listLeadersWithVoterCount(coordinator.id);
+        const leaders = leadersResult.ok ? leadersResult.data.leaders : [];
+
+        return {
+          ...coordinator,
+          cpf: null,
+          zone: null,
+          section: null,
+          leaders,
+        };
+      })
+    );
+
+    return {
+      ok: true,
+      data: {
+        coordinators: coordinatorsWithHierarchy,
+        total: coordinatorsWithHierarchy.length,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao listar coordenadores com hierarquia",
+    };
+  }
+}
+
+export interface LeaderWithVoters {
+  id: string;
+  name: string;
+  email: string;
+  cpf: string | null;
+  zone: string | null;
+  section: string | null;
+  banned: boolean;
+  invitationStatus: string | null;
+  voters: Array<{
+    id: string;
+    name: string;
+    cpf: string | null;
+    zone: string;
+    section: string;
+    phone: string;
+  }>;
+}
+
+export async function listLeadersWithVoters(
+  coordinatorId?: string
+): Promise<
+  ActionResult<{
+    leaders: LeaderWithVoters[];
+    total: number;
+  }>
+> {
+  try {
+    const conditions = [eq(user.role, "leader")];
+    if (coordinatorId) {
+      conditions.push(eq(user.coordinatorId, coordinatorId));
+    }
+
+    const leaders = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        cpf: user.cpf,
+        zone: user.zone,
+        section: user.section,
+        banned: user.banned,
+      })
+      .from(user)
+      .where(and(...conditions));
+
+    const leaderEmails = leaders.map((l) => l.email);
+    const invitations = leaderEmails.length > 0
+      ? await db
+          .select()
+          .from(invitation)
+          .where(inArray(invitation.email, leaderEmails))
+      : [];
+
+    const leadersWithVoters = await Promise.all(
+      leaders.map(async (leader) => {
+        const invitationStatus = invitations.find((inv) => inv.email === leader.email)?.status ?? null;
+
+        const leaderLinks = await db
+          .select({ id: campaign_leader.id })
+          .from(campaign_leader)
+          .where(
+            and(
+              eq(campaign_leader.leaderId, leader.id),
+              eq(campaign_leader.active, true)
+            )
+          );
+
+        const linkIds = leaderLinks.map((l) => l.id);
+
+        let voters: Array<{
+          id: string;
+          name: string;
+          cpf: string | null;
+          zone: string;
+          section: string;
+          phone: string;
+        }> = [];
+
+        if (linkIds.length > 0) {
+          const voterResults = await db
+            .select({
+              id: voter.id,
+              name: voter.name,
+              zone: voter.zone,
+              section: voter.section,
+              phone: voter.phone,
+            })
+            .from(voter)
+            .where(inArray(voter.campaignLeaderId, linkIds))
+            .limit(100);
+
+          voters = voterResults.map((v) => ({
+            ...v,
+            cpf: null,
+          }));
+        }
+
+        return {
+          ...leader,
+          cpf: leader.cpf || null,
+          zone: leader.zone || null,
+          section: leader.section || null,
+          invitationStatus,
+          voters,
+        };
+      })
+    );
+
+    return {
+      ok: true,
+      data: {
+        leaders: leadersWithVoters,
+        total: leadersWithVoters.length,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao listar líderes com eleitores",
     };
   }
 }

@@ -4,15 +4,15 @@ import { ThemeProvider } from "../components/provider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
-  title: "Sistema de Cadastro Eleitoral",
+  title: "Hermes Sistema Eleitoral",
   description:
-    "Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
+    "Hermes - Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
   openGraph: {
-    title: "Sistema de Cadastro Eleitoral",
+    title: "Hermes Sistema Eleitoral",
     description:
-      "Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
+      "Hermes - Sistema para campanhas eleitorais cadastrarem eleitores por links individuais de líderes.",
     url: "",
-    siteName: "Sistema de Cadastro Eleitoral",
+    siteName: "Hermes Sistema Eleitoral",
     images: [],
     locale: "pt_BR",
     type: "website",

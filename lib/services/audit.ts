@@ -20,6 +20,7 @@ export type AuditEntity =
   | "election"
   | "export"
   | "invitation"
+  | "registration_token"
   | "auth"
   | "system";
 

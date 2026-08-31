@@ -14,6 +14,25 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
 interface NavItem {
   label: string;
   href: string;
@@ -78,7 +97,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             className="flex items-center font-semibold hover:cursor-pointer"
             href="/"
           >
-            <span>Sistema Eleitoral</span>
+            <span>Hermes</span>
           </Link>
         </div>
 
@@ -119,6 +138,29 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
               </Link>
             </div>
             <UserProfile />
+            <div className="px-4 pb-4">
+              <p className="text-xs text-muted-foreground text-center mb-2">Desenvolvido por</p>
+              <div className="flex items-center justify-center gap-4">
+                <a
+                  href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                >
+                  <InstagramIcon className="h-3 w-3" />
+                  <span>@sugiiartz</span>
+                </a>
+                <a
+                  href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                >
+                  <InstagramIcon className="h-3 w-3" />
+                  <span>@macae092</span>
+                </a>
+              </div>
+            </div>
           </div>
         </nav>
       </div>

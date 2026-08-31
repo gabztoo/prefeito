@@ -221,6 +221,35 @@ export const audit_event = pgTable("audit_event", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
+export const registration_token = pgTable(
+  "registration_token",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    token: varchar("token", { length: 64 }).notNull().unique(),
+    role: varchar("role", { length: 20 }).notNull(),
+    invitedBy: text("invitedBy")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    coordinatorId: text("coordinatorId").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    registrationTokenTokenIdx: index("registration_token_token_idx").on(
+      table.token
+    ),
+    registrationTokenInvitedByIdx: index("registration_token_invitedBy_idx").on(
+      table.invitedBy
+    ),
+    registrationTokenCoordinatorIdIdx: index(
+      "registration_token_coordinatorId_idx"
+    ).on(table.coordinatorId),
+  })
+);
+
 // Better Auth Rate Limit Table
 export const rateLimit = pgTable("rateLimit", {
   id: text("id").primaryKey(),
