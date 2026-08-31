@@ -166,7 +166,7 @@ export interface CompleteRegistrationInput {
 
 export async function completeCoordinatorRegistration(
   input: CompleteRegistrationInput
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; login: string; loginEmail: string }>> {
   try {
     const passwordError = getPasswordValidationError(input.password);
     if (passwordError) {
@@ -257,7 +257,7 @@ export async function completeCoordinatorRegistration(
         acceptedAt: new Date(),
       });
 
-      return { ok: true, data: { id: userId } };
+      return { ok: true, data: { id: userId, login, loginEmail } };
     });
   } catch {
     return {
@@ -270,7 +270,7 @@ export async function completeCoordinatorRegistration(
 
 export async function completeLeaderRegistration(
   input: CompleteRegistrationInput
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; login: string; loginEmail: string }>> {
   try {
     const passwordError = getPasswordValidationError(input.password);
     if (passwordError) {
@@ -362,7 +362,7 @@ export async function completeLeaderRegistration(
         acceptedAt: new Date(),
       });
 
-      return { ok: true, data: { id: userId } };
+      return { ok: true, data: { id: userId, login, loginEmail } };
     });
   } catch {
     return {

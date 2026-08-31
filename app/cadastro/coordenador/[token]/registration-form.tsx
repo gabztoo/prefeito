@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -21,7 +22,7 @@ import { submitCoordinatorRegistrationAction } from "./actions";
 const coordinatorFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(120),
   email: z.string().email("Email inválido"),
-  password: z.string().min(12, "A senha deve ter pelo menos 12 caracteres").max(128),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").max(128),
   cpf: z.string().optional(),
   rg: z.string().optional(),
   cep: z.string().optional(),
@@ -41,6 +42,8 @@ export function CoordinatorRegistrationForm({ token }: CoordinatorRegistrationFo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [login, setLogin] = useState("");
 
   const form = useForm<CoordinatorFormValues>({
     resolver: zodResolver(coordinatorFormSchema),
@@ -91,6 +94,8 @@ export function CoordinatorRegistrationForm({ token }: CoordinatorRegistrationFo
       });
 
       if (result.ok) {
+        setLoginEmail(result.data.loginEmail);
+        setLogin(result.data.login);
         setSubmitSuccess(true);
         form.reset();
       } else {
@@ -105,13 +110,20 @@ export function CoordinatorRegistrationForm({ token }: CoordinatorRegistrationFo
 
   if (submitSuccess) {
     return (
-      <div role="status" aria-live="polite" aria-atomic="true">
+      <div role="status" aria-live="polite" aria-atomic="true" className="space-y-4">
         <Alert className="border-green-500 bg-green-50">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Cadastro realizado com sucesso! Você já pode fazer login com seu email e senha.
+            Cadastro realizado com sucesso!
           </AlertDescription>
         </Alert>
+        <div className="space-y-1.5 text-sm">
+          <p><strong>Usuário:</strong> {login}</p>
+          <p><strong>Email:</strong> {loginEmail}</p>
+        </div>
+        <Link href="/sign-in">
+          <Button className="w-full">Ir para o login</Button>
+        </Link>
       </div>
     );
   }

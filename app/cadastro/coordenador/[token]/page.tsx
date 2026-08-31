@@ -35,12 +35,12 @@ export default async function PublicCoordinatorRegistrationPage({ params }: Page
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Cadastro de Coordenador</CardTitle>
           <CardDescription>
-            Convite de: {tokenData.inviterName}
+            Convite de: <span className="text-[#1e40af] font-medium">{tokenData.inviterName}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            Preencha seus dados para criar sua conta de coordenador.
+            O sistema irá gerar um email e usuário para acessar o sistema após o cadastro.
           </p>
           <CoordinatorRegistrationForm token={token} />
         </CardContent>
