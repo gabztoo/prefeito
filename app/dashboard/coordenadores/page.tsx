@@ -5,7 +5,6 @@ import { listCoordinatorsWithHierarchy } from "@/lib/services/invitation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Link from "next/link";
 import { CoordenadorActions } from "./coordenador-actions";
 import { GenerateLinkDialog } from "./generate-link-dialog";
@@ -82,26 +81,27 @@ export default async function CoordenadoresPage() {
             </Link>
           </div>
         </div>
-        <div className="mt-6 grid gap-4">
-          {coordinators.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground text-center">
-                  Nenhum coordenador encontrado. Convide coordenadores para
-                  começar.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            coordinators.map((coordinator) => (
-              <Card key={coordinator.id}>
-                <CardHeader className="pb-2">
+
+        {coordinators.length === 0 ? (
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-center">
+                Nenhum coordenador encontrado. Convide coordenadores para
+                começar.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {coordinators.map((coordinator) => (
+              <Card key={coordinator.id} className="flex flex-col">
+                <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-lg truncate">
                         {coordinator.name}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1 truncate">
                         {coordinator.email}
                       </p>
                     </div>
@@ -111,64 +111,94 @@ export default async function CoordenadoresPage() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-4">
-                    {coordinator.cpf && <span>CPF: {coordinator.cpf}</span>}
-                    {coordinator.zone && <span>Zona: {coordinator.zone}</span>}
-                    {coordinator.section && <span>Seção: {coordinator.section}</span>}
-                    <span>
-                      Líderes: {coordinator.leaders.length}
-                    </span>
-                    <span>
-                      Total de eleitores: {coordinator.leaders.reduce((sum, l) => sum + l.voterCount, 0)}
-                    </span>
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+                    {coordinator.cpf && (
+                      <div>
+                        <span className="text-muted-foreground">CPF: </span>
+                        <span>{coordinator.cpf}</span>
+                      </div>
+                    )}
+                    {coordinator.zone && (
+                      <div>
+                        <span className="text-muted-foreground">Zona: </span>
+                        <span>{coordinator.zone}</span>
+                      </div>
+                    )}
+                    {coordinator.section && (
+                      <div>
+                        <span className="text-muted-foreground">Seção: </span>
+                        <span>{coordinator.section}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-muted-foreground">Líderes: </span>
+                      <span>{coordinator.leaders.length}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Eleitores: </span>
+                      <span>
+                        {coordinator.leaders.reduce(
+                          (sum, l) => sum + l.voterCount,
+                          0
+                        )}
+                      </span>
+                    </div>
                   </div>
 
-                  {coordinator.leaders.length > 0 ? (
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="leaders">
-                        <AccordionTrigger className="text-sm">
-                          Ver líderes vinculados ({coordinator.leaders.length})
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid gap-3 mt-2">
-                            {coordinator.leaders.map((leader) => (
-                              <div
-                                key={leader.id}
-                                className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
+                  {coordinator.leaders.length > 0 && (
+                    <div className="mt-auto">
+                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                        Líderes vinculados
+                      </p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {coordinator.leaders.map((leader) => (
+                          <div
+                            key={leader.id}
+                            className="p-3 rounded-lg border bg-muted/30"
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="font-medium text-sm truncate">
+                                {leader.name}
+                              </p>
+                              <Badge
+                                variant={leader.banned ? "destructive" : "default"}
+                                className="ml-2 shrink-0 text-xs"
                               >
+                                {leader.banned ? "Desativado" : "Ativo"}
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              {leader.cpf && (
                                 <div>
-                                  <p className="font-medium text-sm">{leader.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {leader.email}
-                                  </p>
-                                  <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                                    {leader.cpf && <span>CPF: {leader.cpf}</span>}
-                                    {leader.zone && <span>Zona: {leader.zone}</span>}
-                                    {leader.section && <span>Seção: {leader.section}</span>}
-                                  </div>
+                                  <span>CPF: </span>
+                                  <span>{leader.cpf}</span>
                                 </div>
-                                <div className="text-right">
-                                  <Badge variant={leader.banned ? "destructive" : "default"}>
-                                    {leader.banned ? "Desativado" : "Ativo"}
-                                  </Badge>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {leader.voterCount} eleitor{leader.voterCount !== 1 ? "es" : ""}
-                                  </p>
+                              )}
+                              {leader.zone && (
+                                <div>
+                                  <span>Zona: </span>
+                                  <span>{leader.zone}</span>
                                 </div>
+                              )}
+                              {leader.section && (
+                                <div>
+                                  <span>Seção: </span>
+                                  <span>{leader.section}</span>
+                                </div>
+                              )}
+                              <div>
+                                <span>Eleitores: </span>
+                                <span>{leader.voterCount}</span>
                               </div>
-                            ))}
+                            </div>
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Nenhum líder vinculado
-                    </p>
+                        ))}
+                      </div>
+                    </div>
                   )}
 
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-4 pt-3 border-t">
                     <CoordenadorActions
                       coordinatorId={coordinator.id}
                       disabled={coordinator.banned}
@@ -176,9 +206,9 @@ export default async function CoordenadoresPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -75,90 +75,112 @@ export default function SignIn() {
   }
 
   return (
-    <main className="flex flex-col justify-center items-center w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <CardTitle className="text-lg md:text-xl">
-            Hermes Sistema Eleitoral
-          </CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            Acesse o painel administrativo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="flex min-h-screen">
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <img
+          src="/bg.jpeg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="login">E-mail ou Usuário</Label>
-              <Input
-                id="login"
-                name="login"
-                type="text"
-                placeholder="seu@email.com ou nome_usuario"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                required
-                autoComplete="username"
-              />
-            </div>
+      <div className="flex flex-col items-center justify-center w-full lg:w-1/2 p-4 bg-gradient-to-b from-slate-50 to-slate-100 lg:bg-none lg:from-transparent lg:to-transparent relative">
+        <div className="lg:hidden absolute inset-0 z-0">
+          <img
+            src="/bg.jpeg"
+            alt=""
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 to-slate-100/90" />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
+        <div className="relative z-10 w-full max-w-md">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-lg md:text-xl">
+                Hermes Sistema Eleitoral
+              </CardTitle>
+              <CardDescription className="text-xs md:text-sm">
+                Acesse o painel administrativo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            <div className="text-right text-sm">
-              <Link
-                href="/esqueci-senha"
-                className="text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                <div className="space-y-2">
+                  <Label htmlFor="login">E-mail ou Usuário</Label>
+                  <Input
+                    id="login"
+                    name="login"
+                    type="text"
+                    placeholder="seu@email.com ou nome_usuario"
+                    value={login}
+                    onChange={(e) => setLogin(e.target.value)}
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className="text-right text-sm">
+                  <Link
+                    href="/esqueci-senha"
+                    className="text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Esqueci minha senha
+                  </Link>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground mb-2">Desenvolvido por</p>
+            <div className="flex items-center justify-center gap-4">
+              <a
+                href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
               >
-                Esqueci minha senha
-              </Link>
+                <InstagramIcon className="h-3 w-3" />
+                <span>@sugiiartz</span>
+              </a>
+              <a
+                href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+              >
+                <InstagramIcon className="h-3 w-3" />
+                <span>@macae092</span>
+              </a>
             </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="mt-6 text-center">
-        <p className="text-xs text-muted-foreground mb-2">Desenvolvido por</p>
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
-          >
-            <InstagramIcon className="h-3 w-3" />
-            <span>@sugiiartz</span>
-          </a>
-          <a
-            href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
-          >
-            <InstagramIcon className="h-3 w-3" />
-            <span>@macae092</span>
-          </a>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

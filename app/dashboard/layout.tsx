@@ -32,7 +32,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden w-full bg-[url('/bg.jpeg')] bg-[length:auto_100vh] bg-[position:256px_top] bg-no-repeat bg-fixed">
+    <div className="flex h-screen overflow-hidden w-full">
       <DashboardSideBar userRole={result.user?.role ?? undefined} />
       <main className="flex-1 overflow-y-auto">
         <DashboardTopNav userRole={result.user?.role ?? undefined}>
