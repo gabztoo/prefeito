@@ -89,7 +89,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   );
 
   return (
-    <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background">
+    <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background/80 backdrop-blur-sm">
       <div className="flex h-full flex-col">
         <div className="flex h-[3.45rem] items-center border-b px-4">
           <Link
