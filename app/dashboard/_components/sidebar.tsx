@@ -89,7 +89,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
   );
 
   return (
-    <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background/80 backdrop-blur-sm">
+    <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background/50">
       <div className="flex h-full flex-col">
         <div className="flex h-[3.45rem] items-center border-b px-4">
           <Link
@@ -97,7 +97,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             className="flex items-center font-semibold hover:cursor-pointer"
             href="/"
           >
-            <span>Hermes</span>
+            <span className="text-foreground font-bold">Hermes</span>
           </Link>
         </div>
 
@@ -108,12 +108,12 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 key={item.href}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
-                className={clsx(
-                  "flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
-                  pathname === item.href
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
+                  className={clsx(
+                    "flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
+                    pathname === item.href
+                      ? "bg-primary/20 text-primary"
+                      : "text-foreground hover:bg-foreground/10",
+                  )}
               >
                 <item.icon className="h-4 w-4" aria-hidden="true" />
                 {item.label}
@@ -129,8 +129,8 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                 className={clsx(
                   "flex items-center w-full gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
                   pathname === "/dashboard/settings"
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-primary/20 text-primary"
+                    : "text-foreground hover:bg-foreground/10",
                 )}
               >
                 <Settings className="h-4 w-4" aria-hidden="true" />
@@ -139,13 +139,13 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
             </div>
             <UserProfile />
             <div className="px-4 pb-4">
-              <p className="text-xs text-muted-foreground text-center mb-2">Desenvolvido por</p>
+              <p className="text-xs text-foreground/70 text-center mb-2">Desenvolvido por</p>
               <div className="flex items-center justify-center gap-4">
                 <a
                   href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                  className="text-foreground/70 hover:text-primary flex items-center gap-1 text-xs duration-150"
                 >
                   <InstagramIcon className="h-3 w-3" />
                   <span>@sugiiartz</span>
@@ -154,7 +154,7 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                   href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                  className="text-foreground/70 hover:text-primary flex items-center gap-1 text-xs duration-150"
                 >
                   <InstagramIcon className="h-3 w-3" />
                   <span>@macae092</span>
