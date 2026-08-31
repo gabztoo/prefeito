@@ -106,29 +106,6 @@ export default async function Dashboard() {
   const statsResult = await getDashboardStats(result.session.userId, role);
   const stats = statsResult.ok ? statsResult.data : null;
   const metrics = [
-    {
-      label: "Total de eleitores",
-      value: stats?.totalVoters,
-      description: stats
-        ? `${formatCountLabel(stats.recentVoters, "cadastro", "cadastros")} nos últimos 7 dias`
-        : "Não foi possível carregar",
-      href: "/dashboard/eleitores",
-      icon: Users,
-    },
-    {
-      label: "Cadastros recentes",
-      value: stats?.recentVoters,
-      description: "Movimentação dos últimos 7 dias",
-      href: "/dashboard/eleitores",
-      icon: BarChart3,
-    },
-    {
-      label: isAdmin ? "Líderes ativos" : isCoordinator ? "Meus líderes" : "Links ativos",
-      value: isAdmin || isCoordinator ? stats?.activeLeaders : stats?.activeLinks,
-      description: isAdmin || isCoordinator ? "Com acesso ativo" : "Disponíveis para cadastro",
-      href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/eleitores",
-      icon: Users,
-    },
     ...(isAdmin
       ? [
           {
@@ -137,9 +114,36 @@ export default async function Dashboard() {
             description: "Com acesso ativo",
             href: "/dashboard/coordenadores",
             icon: Shield,
+            borderColor: "border-b-[#1e40af]",
           },
         ]
       : []),
+    {
+      label: isAdmin ? "Líderes ativos" : isCoordinator ? "Meus líderes" : "Links ativos",
+      value: isAdmin || isCoordinator ? stats?.activeLeaders : stats?.activeLinks,
+      description: isAdmin || isCoordinator ? "Com acesso ativo" : "Disponíveis para cadastro",
+      href: isAdmin || isCoordinator ? "/dashboard/lideres" : "/dashboard/eleitores",
+      icon: Users,
+      borderColor: "border-b-[#f59e0b]",
+    },
+    {
+      label: "Cadastros recentes",
+      value: stats?.recentVoters,
+      description: "Movimentação dos últimos 7 dias",
+      href: "/dashboard/eleitores",
+      icon: BarChart3,
+      borderColor: "border-b-[#06b6d4]",
+    },
+    {
+      label: "Total de eleitores",
+      value: stats?.totalVoters,
+      description: stats
+        ? `${formatCountLabel(stats.recentVoters, "cadastro", "cadastros")} nos últimos 7 dias`
+        : "Não foi possível carregar",
+      href: "/dashboard/eleitores",
+      icon: Users,
+      borderColor: "border-b-[#10b981]",
+    },
   ];
 
   return (
@@ -176,13 +180,12 @@ export default async function Dashboard() {
         )}
 
         <div className={`grid gap-4 sm:grid-cols-2 ${isAdmin ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
-          {metrics.map(({ label, value, description, href, icon: Icon }, index) => {
-            const borderColors = ["border-b-[#1e40af]", "border-b-[#06b6d4]", "border-b-[#f59e0b]", "border-b-[#10b981]"];
+          {metrics.map(({ label, value, description, href, icon: Icon, borderColor }) => {
             return (
               <Link
                 key={label}
                 href={href}
-                className={`group rounded-xl border bg-card p-5 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:border-primary border-b-4 ${borderColors[index % 3]}`}
+                className={`group rounded-xl border bg-card p-5 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:border-primary border-b-4 ${borderColor}`}
                 aria-label={`${label}: ${value === undefined ? "indisponível" : formatNumber(value)}`}
               >
                 <div className="flex items-start justify-between gap-4">
