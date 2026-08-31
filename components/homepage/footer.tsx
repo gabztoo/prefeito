@@ -2,11 +2,11 @@ import Link from "next/link";
 
 const credits = [
   {
-    label: "@sugiiartz",
+    label: "sugiiartz",
     href: "https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn",
   },
   {
-    label: "@macae092",
+    label: "macae092",
     href: "https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1",
   },
 ];
@@ -45,7 +45,7 @@ export default function FooterSection() {
                 href={credit.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary flex items-center gap-2 duration-150"
+                className="text-purple-500 hover:text-purple-600 flex items-center gap-2 duration-150"
               >
                 <InstagramIcon className="h-5 w-5" />
                 <span className="text-sm font-medium">{credit.label}</span>

@@ -140,19 +140,19 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
                   href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                  className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
                 >
                   <InstagramIcon className="h-3 w-3" />
-                  <span>@sugiiartz</span>
+                  <span>sugiiartz</span>
                 </a>
                 <a
                   href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs duration-150"
+                  className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
                 >
                   <InstagramIcon className="h-3 w-3" />
-                  <span>@macae092</span>
+                  <span>macae092</span>
                 </a>
               </div>
             </div>
