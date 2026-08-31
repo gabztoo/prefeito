@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "@/lib/auth-client";
+import { signIn, useSession } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -38,10 +38,21 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export default function SignIn() {
   const router = useRouter();
+  const { data: sessionData, isPending } = useSession();
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (sessionData?.session) {
+      router.push("/dashboard");
+    }
+  }, [sessionData, router]);
+
+  if (isPending) {
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

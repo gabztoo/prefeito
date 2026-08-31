@@ -5,10 +5,6 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
 
-  if (sessionCookie && ["/sign-in", "/sign-up"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
   if (!sessionCookie && pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
