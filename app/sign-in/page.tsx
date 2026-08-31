@@ -6,7 +6,6 @@ import { signIn } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,26 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
-import Image from "next/image";
-
-function InstagramIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  );
-}
+import { User, Lock } from "lucide-react";
 
 export default function SignIn() {
   const router = useRouter();
@@ -76,26 +56,17 @@ export default function SignIn() {
   }
 
   return (
-    <main className="flex flex-col justify-center items-center w-full min-h-screen bg-[#1e40af] p-4">
-      <Card className="max-w-md w-full shadow-lg border-[#bfdbfe]">
-        <CardHeader className="text-center space-y-3">
-          <div className="flex justify-center">
-            <Image
-              src="/hermes.jpg"
-              alt="Hermes"
-              width={64}
-              height={64}
-              className="rounded-lg object-cover"
-            />
-          </div>
-          <CardTitle className="text-lg md:text-xl">
-            Hermes Sistema Eleitoral
+    <main
+      className="flex flex-col justify-center items-center w-full min-h-screen bg-cover bg-center bg-no-repeat p-4"
+      style={{ backgroundImage: "url('/bglogin.jpeg')" }}
+    >
+      <Card className="max-w-sm w-full shadow-xl border-0 rounded-xl">
+        <CardHeader className="text-center space-y-2 pt-6">
+          <CardTitle className="text-xl font-bold text-gray-800">
+            Acesso Restrito
           </CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            Acesse o painel administrativo
-          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 pb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <Alert variant="destructive">
@@ -103,73 +74,69 @@ export default function SignIn() {
               </Alert>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="login">E-mail ou Usuário</Label>
-              <Input
-                id="login"
-                name="login"
-                type="text"
-                placeholder="seu@email.com ou nome_usuario"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                required
-                autoComplete="username"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="login" className="text-sm font-medium text-gray-700">
+                E-mail ou Usuário
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="login"
+                  name="login"
+                  type="text"
+                  placeholder="E-mail ou Usuário"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  required
+                  autoComplete="username"
+                  className="pl-10"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Senha
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="pl-10"
+                />
+              </div>
             </div>
 
-            <div className="text-right text-sm">
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 cursor-pointer text-gray-600">
+                <input type="checkbox" className="rounded border-gray-300" />
+                Lembrar-me
+              </label>
               <Link
                 href="/esqueci-senha"
-                className="text-[#1e40af] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="text-[#1e40af] hover:underline font-medium"
               >
-                Esqueci minha senha
+                Esqueceu a senha?
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Entrando..." : "Entrar"}
+            <Button
+              type="submit"
+              className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white font-semibold py-2.5 rounded-lg text-sm cursor-pointer"
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "ENTRAR NO SISTEMA"}
             </Button>
           </form>
         </CardContent>
       </Card>
-
-      <div className="mt-6 text-center">
-        <p className="text-xs text-muted-foreground mb-2">Desenvolvido por</p>
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href="https://www.instagram.com/sugiiartz?igsi=dXEyeHo4cDhoZjNn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
-          >
-            <InstagramIcon className="h-3 w-3" />
-            <span>sugiiartz</span>
-          </a>
-          <a
-            href="https://www.instagram.com/gabztoo?igsi=OWJvZDQ3M21qbHE1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-xs duration-150"
-          >
-            <InstagramIcon className="h-3 w-3" />
-            <span>macae092</span>
-          </a>
-        </div>
-      </div>
     </main>
   );
 }
