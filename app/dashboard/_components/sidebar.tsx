@@ -88,9 +88,10 @@ export default function DashboardSideBar({ userRole }: DashboardSideBarProps) {
         <div className="flex h-[3.45rem] items-center border-b px-4">
           <Link
             prefetch={true}
-            className="flex items-center font-semibold hover:cursor-pointer"
+            className="flex items-center gap-2 font-semibold hover:cursor-pointer"
             href="/"
           >
+            <img src="/hermes.jpg" alt="Hermes" className="h-7 w-7 rounded-sm object-cover" />
             <span>Hermes</span>
           </Link>
         </div>
