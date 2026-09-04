@@ -214,6 +214,7 @@ describe("Voter Validation", () => {
     it("should accept valid voter data", () => {
       const result = validateVoterData({
         name: "João da Silva",
+        motherName: "Maria da Silva",
         zone: "123",
         section: "456",
         phone: "1234567890",
@@ -224,6 +225,7 @@ describe("Voter Validation", () => {
     it("should reject invalid name", () => {
       const result = validateVoterData({
         name: "J",
+        motherName: "Maria da Silva",
         zone: "123",
         section: "456",
         phone: "1234567890",
@@ -239,6 +241,7 @@ describe("Voter Validation", () => {
     it("should reject invalid zone", () => {
       const result = validateVoterData({
         name: "João da Silva",
+        motherName: "Maria da Silva",
         zone: "abc",
         section: "456",
         phone: "1234567890",
@@ -254,6 +257,7 @@ describe("Voter Validation", () => {
     it("should reject invalid section", () => {
       const result = validateVoterData({
         name: "João da Silva",
+        motherName: "Maria da Silva",
         zone: "123",
         section: "abc",
         phone: "1234567890",
@@ -269,6 +273,7 @@ describe("Voter Validation", () => {
     it("should reject invalid phone", () => {
       const result = validateVoterData({
         name: "João da Silva",
+        motherName: "Maria da Silva",
         zone: "123",
         section: "456",
         phone: "123456789",
@@ -284,6 +289,7 @@ describe("Voter Validation", () => {
     it("should reject multiple invalid fields", () => {
       const result = validateVoterData({
         name: "J",
+        motherName: "M",
         zone: "abc",
         section: "abc",
         phone: "123456789",
@@ -302,6 +308,7 @@ describe("Voter Validation", () => {
     it("should normalize phone in result", () => {
       const result = validateVoterData({
         name: "João da Silva",
+        motherName: "Maria da Silva",
         zone: "123",
         section: "456",
         phone: "+55 12 3456-7890",
@@ -315,6 +322,7 @@ describe("Voter Validation", () => {
     it("should normalize name in result", () => {
       const result = validateVoterData({
         name: "  João da Silva  ",
+        motherName: "  Maria da Silva  ",
         zone: "123",
         section: "456",
         phone: "1234567890",
@@ -322,6 +330,7 @@ describe("Voter Validation", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.name).toBe("João da Silva");
+        expect(result.data.motherName).toBe("Maria da Silva");
       }
     });
   });

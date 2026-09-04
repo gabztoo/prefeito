@@ -6,6 +6,7 @@ export const zoneSchema = z.string().trim().regex(/^\d{1,4}$/);
 export const sectionSchema = z.string().trim().regex(/^\d{1,4}$/);
 export const voterDataSchema = z.object({
   name: nameSchema,
+  motherName: nameSchema,
   zone: zoneSchema,
   section: sectionSchema,
   phone: z.string(),
@@ -97,11 +98,13 @@ export function validatePhone(phone: string): ValidationResult<string> {
  */
 export function validateVoterData(data: {
   name: string;
+  motherName: string;
   zone: string;
   section: string;
   phone: string;
 }): ValidationResult<{
   name: string;
+  motherName: string;
   zone: string;
   section: string;
   phone: string;
@@ -112,6 +115,12 @@ export function validateVoterData(data: {
   const nameResult = validateName(data.name);
   if (!nameResult.ok) {
     fieldErrors.name = nameResult.fieldErrors?.name || ["Nome inválido"];
+    hasError = true;
+  }
+
+  const motherNameResult = validateName(data.motherName);
+  if (!motherNameResult.ok) {
+    fieldErrors.motherName = motherNameResult.fieldErrors?.name || ["Nome da mãe inválido"];
     hasError = true;
   }
 
@@ -142,7 +151,7 @@ export function validateVoterData(data: {
     };
   }
 
-  if (!nameResult.ok || !zoneResult.ok || !sectionResult.ok || !phoneResult.ok) {
+  if (!nameResult.ok || !motherNameResult.ok || !zoneResult.ok || !sectionResult.ok || !phoneResult.ok) {
     return {
       ok: false,
       code: "VALIDATION_ERROR",
@@ -155,6 +164,7 @@ export function validateVoterData(data: {
     ok: true,
     data: {
       name: nameResult.data,
+      motherName: motherNameResult.data,
       zone: zoneResult.data,
       section: sectionResult.data,
       phone: phoneResult.data,

@@ -27,6 +27,7 @@ function formatPhone(value: string): string {
 
 const voterFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(120),
+  motherName: z.string().min(2, "Nome da mãe deve ter pelo menos 2 caracteres").max(120),
   phone: z
     .string()
     .regex(/^\d{11}$/, "Telefone deve conter 11 dígitos"),
@@ -58,6 +59,7 @@ export function VoterRegistrationForm({ token }: VoterRegistrationFormProps) {
     resolver: zodResolver(voterFormSchema),
     defaultValues: {
       name: "",
+      motherName: "",
       phone: "",
       zone: "",
       section: "",
@@ -73,6 +75,7 @@ export function VoterRegistrationForm({ token }: VoterRegistrationFormProps) {
       const result = await submitVoterRegistrationAction({
         token,
         name: values.name,
+        motherName: values.motherName,
         phone: values.phone,
         zone: values.zone,
         section: values.section,
@@ -124,6 +127,20 @@ export function VoterRegistrationForm({ token }: VoterRegistrationFormProps) {
               <FormLabel>Nome completo</FormLabel>
               <FormControl>
                 <Input placeholder="Nome completo" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="motherName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome da Mãe</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome completo da mãe" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

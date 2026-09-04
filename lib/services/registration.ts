@@ -500,6 +500,7 @@ export async function listRegistrationTokens(
 export interface VoterRegistrationInput {
   token: string;
   name: string;
+  motherName: string;
   phone: string;
   zone: string;
   section: string;
@@ -559,6 +560,7 @@ export async function completeVoterRegistration(
         id: voterId,
         leaderId: tokenRecord.leaderId,
         name: input.name,
+        motherName: input.motherName,
         phone: cleanPhone,
         zone: input.zone,
         section: input.section,

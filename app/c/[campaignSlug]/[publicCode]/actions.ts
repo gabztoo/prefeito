@@ -8,6 +8,7 @@ export async function submitVoterRegistrationAction(
   publicCode: string,
   data: {
     name: string;
+    motherName: string;
     zone: string;
     section: string;
     phone: string;

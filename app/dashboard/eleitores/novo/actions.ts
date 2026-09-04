@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createVoterAction(data: {
   name: string;
+  motherName: string;
   phone: string;
   zone: string;
   section: string;
@@ -44,6 +45,7 @@ export async function createVoterAction(data: {
     result.user?.role || "leader",
     {
       name: data.name,
+      motherName: data.motherName,
       phone: data.phone,
       zone: data.zone,
       section: data.section,

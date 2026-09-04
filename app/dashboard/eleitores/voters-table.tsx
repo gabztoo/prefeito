@@ -20,6 +20,7 @@ import {
 interface Voter {
   id: string;
   name: string;
+  motherName: string;
   zone: string;
   section: string;
   phone: string;
@@ -41,6 +42,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: voter.name,
+    motherName: voter.motherName,
     zone: voter.zone,
     section: voter.section,
     phone: voter.phone,
@@ -49,6 +51,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
   function openEditor() {
     setFormData({
       name: voter.name,
+      motherName: voter.motherName,
       zone: voter.zone,
       section: voter.section,
       phone: voter.phone,
@@ -100,6 +103,15 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
               id={`edit-name-${voter.id}`}
               value={formData.name}
               onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`edit-motherName-${voter.id}`}>Nome da Mãe</Label>
+            <Input
+              id={`edit-motherName-${voter.id}`}
+              value={formData.motherName}
+              onChange={(event) => setFormData({ ...formData, motherName: event.target.value })}
               required
             />
           </div>
@@ -173,6 +185,7 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <th className="px-4 py-3">Nome</th>
+            <th className="hidden px-4 py-3 md:table-cell">Nome da Mãe</th>
             <th className="hidden px-4 py-3 md:table-cell">Telefone</th>
             <th className="hidden px-4 py-3 lg:table-cell">Título</th>
             <th className="hidden px-4 py-3 sm:table-cell">Zona</th>
@@ -186,6 +199,7 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
           {voters.map((voter) => (
             <tr key={voter.id} className="border-b last:border-b-0 hover:bg-muted/30">
               <td className="px-4 py-3 font-medium">{voter.name}</td>
+              <td className="hidden px-4 py-3 md:table-cell">{voter.motherName}</td>
               <td className="hidden px-4 py-3 md:table-cell">
                 {voter.phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")}
               </td>

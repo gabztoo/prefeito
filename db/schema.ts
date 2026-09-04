@@ -149,6 +149,7 @@ export const voter = pgTable(
       onDelete: "set null",
     }),
     name: varchar("name", { length: 120 }).notNull(),
+    motherName: varchar("motherName", { length: 120 }).notNull(),
     zone: varchar("zone", { length: 4 }).notNull(),
     section: varchar("section", { length: 4 }).notNull(),
     phone: varchar("phone", { length: 11 }).notNull(),

@@ -6,6 +6,7 @@ import { ActionResult } from "@/lib/types";
 export async function submitVoterRegistrationAction(data: {
   token: string;
   name: string;
+  motherName: string;
   phone: string;
   zone: string;
   section: string;
@@ -14,6 +15,7 @@ export async function submitVoterRegistrationAction(data: {
   return completeVoterRegistration({
     token: data.token,
     name: data.name,
+    motherName: data.motherName,
     phone: data.phone,
     zone: data.zone,
     section: data.section,

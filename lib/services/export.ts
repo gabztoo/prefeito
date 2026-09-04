@@ -97,6 +97,7 @@ export async function exportCsv(
     const query = `
       SELECT
         v."name",
+        v."motherName",
         v."zone",
         v."section",
         v."phone",
@@ -112,7 +113,7 @@ export async function exportCsv(
     `;
 
     const BOM = "\ufeff";
-    const HEADER = "Nome;Zona;Seção;Telefone;Líder;Campanha;Data do cadastro\n";
+    const HEADER = "Nome;Nome da Mãe;Zona;Seção;Telefone;Líder;Campanha;Data do cadastro\n";
     const FORMULA_CHARS = ["=", "+", "-", "@"] as const;
 
     function sanitizeValue(value: unknown): string {
@@ -155,10 +156,11 @@ export async function exportCsv(
         controller.enqueue(new TextEncoder().encode(BOM + HEADER));
 
         for (const row of rows) {
-          const [name, zone, section, phone, leaderName, campaignName, createdAt] = row;
+          const [name, motherName, zone, section, phone, leaderName, campaignName, createdAt] = row;
 
           const csvLine = [
             sanitizeValue(name),
+            sanitizeValue(motherName),
             sanitizeValue(zone),
             sanitizeValue(section),
             sanitizeValue(phone),
