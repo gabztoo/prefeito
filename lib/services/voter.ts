@@ -25,6 +25,7 @@ export async function registerVoter(
   data: {
     name: string;
     motherName: string;
+    birthDate: string;
     zone: string;
     section: string;
     phone: string;
@@ -158,6 +159,7 @@ export async function registerVoter(
         campaignLeaderId: leaderId,
         name,
         motherName: data.motherName,
+        birthDate: data.birthDate,
         zone,
         section,
         phone,
@@ -208,6 +210,7 @@ export async function listVoters(
       id: string;
       name: string;
       motherName: string;
+      birthDate: string;
       zone: string;
       section: string;
       phone: string;
@@ -268,6 +271,7 @@ export async function listVoters(
         id: voter.id,
         name: voter.name,
         motherName: voter.motherName,
+        birthDate: voter.birthDate,
         zone: voter.zone,
         section: voter.section,
         phone: voter.phone,
@@ -347,6 +351,7 @@ export async function listVoters(
         id: voter.id,
         name: voter.name,
         motherName: voter.motherName,
+        birthDate: voter.birthDate,
         zone: voter.zone,
         section: voter.section,
         phone: voter.phone,
@@ -408,6 +413,7 @@ export async function listVoters(
       id: voter.id,
       name: voter.name,
       motherName: voter.motherName,
+      birthDate: voter.birthDate,
       zone: voter.zone,
       section: voter.section,
       phone: voter.phone,
@@ -681,6 +687,7 @@ export async function editVoter(
   data: {
     name?: string;
     motherName?: string;
+    birthDate?: string;
     zone?: string;
     section?: string;
     phone?: string;
@@ -713,6 +720,7 @@ export async function editVoter(
   const validation = validateVoterData({
     name: data.name ?? existing[0].name,
     motherName: data.motherName ?? existing[0].motherName,
+    birthDate: data.birthDate ?? existing[0].birthDate ?? '',
     zone: data.zone ?? existing[0].zone,
     section: data.section ?? existing[0].section,
     phone: data.phone ?? existing[0].phone,
@@ -727,6 +735,7 @@ export async function editVoter(
   const updateData: Partial<{
     name: string;
     motherName: string;
+    birthDate: string;
     zone: string;
     section: string;
     phone: string;
@@ -734,6 +743,7 @@ export async function editVoter(
 
   if (data.name !== undefined) updateData.name = normalizedData.name;
   if (data.motherName !== undefined) updateData.motherName = normalizedData.motherName;
+  if (data.birthDate !== undefined) updateData.birthDate = normalizedData.birthDate;
   if (data.zone !== undefined) updateData.zone = normalizedData.zone;
   if (data.section !== undefined) updateData.section = normalizedData.section;
   if (data.phone !== undefined) {
@@ -839,6 +849,7 @@ export async function deleteVoter(
 export interface CreateVoterInput {
   name: string;
   motherName: string;
+  birthDate: string;
   phone: string;
   zone: string;
   section: string;
@@ -882,6 +893,7 @@ export async function createVoter(
       leaderId: userId,
       name: input.name,
       motherName: input.motherName,
+      birthDate: input.birthDate,
       phone: cleanPhone,
       zone: input.zone,
       section: input.section,

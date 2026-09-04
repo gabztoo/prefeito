@@ -14,6 +14,7 @@ export default function NovoEleitorPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [motherName, setMotherName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [phone, setPhone] = useState("");
   const [zone, setZone] = useState("");
   const [section, setSection] = useState("");
@@ -50,6 +51,7 @@ export default function NovoEleitorPage() {
       const result = await createVoterAction({
         name,
         motherName,
+        birthDate,
         phone,
         zone,
         section,
@@ -86,6 +88,7 @@ export default function NovoEleitorPage() {
               setSuccess(false);
               setName("");
               setMotherName("");
+              setBirthDate("");
               setPhone("");
               setZone("");
               setSection("");
@@ -144,6 +147,17 @@ export default function NovoEleitorPage() {
                   placeholder="Nome completo da mãe"
                   value={motherName}
                   onChange={(e) => setMotherName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="birthDate">Data de Nascimento</Label>
+                <Input
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
                   required
                 />
               </div>

@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 export async function createVoterAction(data: {
   name: string;
   motherName: string;
+  birthDate: string;
   phone: string;
   zone: string;
   section: string;
@@ -46,6 +47,7 @@ export async function createVoterAction(data: {
     {
       name: data.name,
       motherName: data.motherName,
+      birthDate: data.birthDate,
       phone: data.phone,
       zone: data.zone,
       section: data.section,

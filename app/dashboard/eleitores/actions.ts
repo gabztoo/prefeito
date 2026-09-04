@@ -26,6 +26,7 @@ export async function listVotersAction(options?: {
       id: string;
       name: string;
       motherName: string;
+      birthDate: string;
       zone: string;
       section: string;
       phone: string;
@@ -94,6 +95,7 @@ export async function editVoterAction(
   data: {
     name?: string;
     motherName?: string;
+    birthDate?: string;
     zone?: string;
     section?: string;
     phone?: string;

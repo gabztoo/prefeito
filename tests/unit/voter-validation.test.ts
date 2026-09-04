@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateVoterData, validateName, validateZone, validateSection, validatePhone } from "@/lib/validation";
+import { validateVoterData, validateName, validateZone, validateSection, validatePhone, validateBirthDate } from "@/lib/validation";
 import { getVoterSearchTerms } from "@/lib/services/voter";
 
 describe("Voter Validation", () => {
@@ -210,11 +210,32 @@ describe("Voter Validation", () => {
     });
   });
 
+  describe("validateBirthDate", () => {
+    it("should accept valid date", () => {
+      const result = validateBirthDate("1990-05-15");
+      expect(result.ok).toBe(true);
+    });
+
+    it("should reject invalid date format", () => {
+      const result = validateBirthDate("15/05/1990");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.code).toBe("VALIDATION_ERROR");
+      }
+    });
+
+    it("should reject empty date", () => {
+      const result = validateBirthDate("");
+      expect(result.ok).toBe(false);
+    });
+  });
+
   describe("validateVoterData", () => {
     it("should accept valid voter data", () => {
       const result = validateVoterData({
         name: "João da Silva",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "456",
         phone: "1234567890",
@@ -226,6 +247,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "J",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "456",
         phone: "1234567890",
@@ -238,10 +260,28 @@ describe("Voter Validation", () => {
       }
     });
 
+    it("should reject invalid birthDate", () => {
+      const result = validateVoterData({
+        name: "João da Silva",
+        motherName: "Maria da Silva",
+        birthDate: "15/05/1990",
+        zone: "123",
+        section: "456",
+        phone: "1234567890",
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.code).toBe("VALIDATION_ERROR");
+        expect(result.fieldErrors).toBeDefined();
+        expect(result.fieldErrors?.birthDate).toBeDefined();
+      }
+    });
+
     it("should reject invalid zone", () => {
       const result = validateVoterData({
         name: "João da Silva",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "abc",
         section: "456",
         phone: "1234567890",
@@ -258,6 +298,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "João da Silva",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "abc",
         phone: "1234567890",
@@ -274,6 +315,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "João da Silva",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "456",
         phone: "123456789",
@@ -290,6 +332,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "J",
         motherName: "M",
+        birthDate: "invalid",
         zone: "abc",
         section: "abc",
         phone: "123456789",
@@ -309,6 +352,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "João da Silva",
         motherName: "Maria da Silva",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "456",
         phone: "+55 12 3456-7890",
@@ -323,6 +367,7 @@ describe("Voter Validation", () => {
       const result = validateVoterData({
         name: "  João da Silva  ",
         motherName: "  Maria da Silva  ",
+        birthDate: "1990-05-15",
         zone: "123",
         section: "456",
         phone: "1234567890",

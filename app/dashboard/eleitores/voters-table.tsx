@@ -21,6 +21,7 @@ interface Voter {
   id: string;
   name: string;
   motherName: string;
+  birthDate: string;
   zone: string;
   section: string;
   phone: string;
@@ -43,6 +44,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
   const [formData, setFormData] = useState({
     name: voter.name,
     motherName: voter.motherName,
+    birthDate: voter.birthDate || '',
     zone: voter.zone,
     section: voter.section,
     phone: voter.phone,
@@ -52,6 +54,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
     setFormData({
       name: voter.name,
       motherName: voter.motherName,
+      birthDate: voter.birthDate || '',
       zone: voter.zone,
       section: voter.section,
       phone: voter.phone,
@@ -112,6 +115,16 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
               id={`edit-motherName-${voter.id}`}
               value={formData.motherName}
               onChange={(event) => setFormData({ ...formData, motherName: event.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`edit-birthDate-${voter.id}`}>Data de Nascimento</Label>
+            <Input
+              id={`edit-birthDate-${voter.id}`}
+              type="date"
+              value={formData.birthDate}
+              onChange={(event) => setFormData({ ...formData, birthDate: event.target.value })}
               required
             />
           </div>
@@ -186,6 +199,7 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
           <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <th className="px-4 py-3">Nome</th>
             <th className="hidden px-4 py-3 md:table-cell">Nome da Mãe</th>
+            <th className="hidden px-4 py-3 md:table-cell">Data Nasc.</th>
             <th className="hidden px-4 py-3 md:table-cell">Telefone</th>
             <th className="hidden px-4 py-3 lg:table-cell">Título</th>
             <th className="hidden px-4 py-3 sm:table-cell">Zona</th>
@@ -200,6 +214,9 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
             <tr key={voter.id} className="border-b last:border-b-0 hover:bg-muted/30">
               <td className="px-4 py-3 font-medium">{voter.name}</td>
               <td className="hidden px-4 py-3 md:table-cell">{voter.motherName}</td>
+              <td className="hidden px-4 py-3 md:table-cell">
+                {voter.birthDate || "-"}
+              </td>
               <td className="hidden px-4 py-3 md:table-cell">
                 {voter.phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")}
               </td>

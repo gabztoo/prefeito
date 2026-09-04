@@ -21,6 +21,7 @@ import { submitVoterRegistrationAction } from "./actions";
 const voterFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(120),
   motherName: z.string().min(2, "Nome da mãe deve ter pelo menos 2 caracteres").max(120),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato aaaa-mm-dd"),
   zone: z.string().regex(/^\d{1,4}$/, "Zona deve conter apenas dígitos (1-4 caracteres)"),
   section: z.string().regex(/^\d{1,4}$/, "Seção deve conter apenas dígitos (1-4 caracteres)"),
   phone: z.string().min(10, "Telefone inválido").max(11),
@@ -45,6 +46,7 @@ export function VoterRegistrationForm({ campaignSlug, publicCode }: VoterRegistr
     defaultValues: {
       name: "",
       motherName: "",
+      birthDate: "",
       zone: "",
       section: "",
       phone: "",
@@ -153,6 +155,26 @@ export function VoterRegistrationForm({ campaignSlug, publicCode }: VoterRegistr
                 />
               </FormControl>
               <FormMessage id="motherName-error" />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="birthDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="birthDate">Data de Nascimento</FormLabel>
+              <FormControl>
+                <Input
+                  id="birthDate"
+                  type="date"
+                  aria-describedby="birthDate-error"
+                  aria-invalid={!!form.formState.errors.birthDate}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage id="birthDate-error" />
             </FormItem>
           )}
         />

@@ -4,9 +4,12 @@ import { z } from "zod";
 export const nameSchema = z.string().trim().min(2).max(120);
 export const zoneSchema = z.string().trim().regex(/^\d{1,4}$/);
 export const sectionSchema = z.string().trim().regex(/^\d{1,4}$/);
+export const birthDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato aaaa-mm-dd");
+
 export const voterDataSchema = z.object({
   name: nameSchema,
   motherName: nameSchema,
+  birthDate: birthDateSchema,
   zone: zoneSchema,
   section: sectionSchema,
   phone: z.string(),
@@ -93,18 +96,42 @@ export function validatePhone(phone: string): ValidationResult<string> {
   return { ok: true, data: normalized };
 }
 
+export function validateBirthDate(birthDate: string): ValidationResult<string> {
+  const trimmed = birthDate.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: "Data de nascimento inválida. Use o formato aaaa-mm-dd",
+      fieldErrors: { birthDate: ["Data de nascimento inválida"] },
+    };
+  }
+  const date = new Date(trimmed);
+  if (isNaN(date.getTime())) {
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message: "Data de nascimento inválida",
+      fieldErrors: { birthDate: ["Data de nascimento inválida"] },
+    };
+  }
+  return { ok: true, data: trimmed };
+}
+
 /**
  * Validate complete voter data
  */
 export function validateVoterData(data: {
   name: string;
   motherName: string;
+  birthDate: string;
   zone: string;
   section: string;
   phone: string;
 }): ValidationResult<{
   name: string;
   motherName: string;
+  birthDate: string;
   zone: string;
   section: string;
   phone: string;
@@ -121,6 +148,12 @@ export function validateVoterData(data: {
   const motherNameResult = validateName(data.motherName);
   if (!motherNameResult.ok) {
     fieldErrors.motherName = motherNameResult.fieldErrors?.name || ["Nome da mãe inválido"];
+    hasError = true;
+  }
+
+  const birthDateResult = validateBirthDate(data.birthDate);
+  if (!birthDateResult.ok) {
+    fieldErrors.birthDate = birthDateResult.fieldErrors?.birthDate || ["Data de nascimento inválida"];
     hasError = true;
   }
 
@@ -151,7 +184,7 @@ export function validateVoterData(data: {
     };
   }
 
-  if (!nameResult.ok || !motherNameResult.ok || !zoneResult.ok || !sectionResult.ok || !phoneResult.ok) {
+  if (!nameResult.ok || !motherNameResult.ok || !birthDateResult.ok || !zoneResult.ok || !sectionResult.ok || !phoneResult.ok) {
     return {
       ok: false,
       code: "VALIDATION_ERROR",
@@ -165,6 +198,7 @@ export function validateVoterData(data: {
     data: {
       name: nameResult.data,
       motherName: motherNameResult.data,
+      birthDate: birthDateResult.data,
       zone: zoneResult.data,
       section: sectionResult.data,
       phone: phoneResult.data,

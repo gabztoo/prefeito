@@ -98,6 +98,7 @@ export async function exportCsv(
       SELECT
         v."name",
         v."motherName",
+        v."birthDate",
         v."zone",
         v."section",
         v."phone",
@@ -113,7 +114,7 @@ export async function exportCsv(
     `;
 
     const BOM = "\ufeff";
-    const HEADER = "Nome;Nome da Mãe;Zona;Seção;Telefone;Líder;Campanha;Data do cadastro\n";
+    const HEADER = "Nome;Nome da Mãe;Data de Nascimento;Zona;Seção;Telefone;Líder;Campanha;Data do cadastro\n";
     const FORMULA_CHARS = ["=", "+", "-", "@"] as const;
 
     function sanitizeValue(value: unknown): string {
@@ -156,11 +157,20 @@ export async function exportCsv(
         controller.enqueue(new TextEncoder().encode(BOM + HEADER));
 
         for (const row of rows) {
-          const [name, motherName, zone, section, phone, leaderName, campaignName, createdAt] = row;
+          const [name, motherName, birthDate, zone, section, phone, leaderName, campaignName, createdAt] = row;
+
+          function formatBirthDate(date: Date | string): string {
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, "0");
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+          }
 
           const csvLine = [
             sanitizeValue(name),
             sanitizeValue(motherName),
+            sanitizeValue(birthDate ? formatBirthDate(birthDate) : ""),
             sanitizeValue(zone),
             sanitizeValue(section),
             sanitizeValue(phone),
