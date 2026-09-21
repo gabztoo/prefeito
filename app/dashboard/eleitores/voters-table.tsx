@@ -34,7 +34,8 @@ interface Voter {
 
 interface VotersTableProps {
   voters: Voter[];
-  isAdmin: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 function EditVoterDialog({ voter }: { voter: Voter }) {
@@ -176,7 +177,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
   );
 }
 
-export function VotersTable({ voters, isAdmin }: VotersTableProps) {
+export function VotersTable({ voters, canEdit, canDelete }: VotersTableProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = (voterId: string) => {
@@ -206,7 +207,9 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
             <th className="hidden px-4 py-3 sm:table-cell">Seção</th>
             <th className="hidden px-4 py-3 md:table-cell">Cadastro</th>
             <th className="hidden px-4 py-3 xl:table-cell">Líder</th>
-            {isAdmin && <th className="px-4 py-3 text-right">Ações</th>}
+            {(canEdit || canDelete) && (
+              <th className="px-4 py-3 text-right">Ações</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -233,24 +236,26 @@ export function VotersTable({ voters, isAdmin }: VotersTableProps) {
                   "-"
                 )}
               </td>
-              {isAdmin && (
+              {(canEdit || canDelete) && (
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">
-                    <EditVoterDialog voter={voter} />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(voter.id)}
-                      disabled={isPending}
-                      className="text-destructive hover:text-destructive"
-                      aria-label={`Excluir eleitor ${voter.name}`}
-                    >
-                      {isPending ? (
-                        <LoaderIcon className="size-4 animate-spin" />
-                      ) : (
-                        <TrashIcon className="size-4" />
-                      )}
-                    </Button>
+                    {canEdit && <EditVoterDialog voter={voter} />}
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(voter.id)}
+                        disabled={isPending}
+                        className="text-destructive hover:text-destructive"
+                        aria-label={`Excluir eleitor ${voter.name}`}
+                      >
+                        {isPending ? (
+                          <LoaderIcon className="size-4 animate-spin" />
+                        ) : (
+                          <TrashIcon className="size-4" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </td>
               )}
