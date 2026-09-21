@@ -46,7 +46,7 @@ function getErrorMessage(error: string, hasToken: boolean): string | null {
   }
 
   if (error === "VALIDATION_ERROR") {
-    return "A senha deve ter entre 12 e 128 caracteres e as duas senhas devem coincidir.";
+    return "A senha deve ter entre 6 e 128 caracteres e as duas senhas devem coincidir.";
   }
 
   if (error === "NOT_FOUND") {
@@ -118,7 +118,7 @@ export default async function RedefinirSenhaPage({
               className="min-h-5 text-sm"
               role="status"
             >
-              {!errorMessage && "Sua senha deve ter entre 12 e 128 caracteres."}
+              {!errorMessage && "Sua senha deve ter entre 6 e 128 caracteres."}
             </p>
 
             {errorMessage && (

@@ -113,7 +113,7 @@ export function getPasswordValidationError(password: unknown): string | null {
     password.length < PASSWORD_MIN_LENGTH ||
     password.length > PASSWORD_MAX_LENGTH
   ) {
-    return "A senha deve ter entre 12 e 128 caracteres.";
+    return "A senha deve ter entre 6 e 128 caracteres.";
   }
 
   return null;
@@ -123,7 +123,7 @@ export function getInitialPasswordValidationError(
   password: unknown
 ): string | null {
   if (password === LEADER_DEFAULT_PASSWORD) {
-    return "Escolha uma senha diferente da senha padrão com pelo menos 12 caracteres.";
+    return "Escolha uma senha diferente da senha padrão com pelo menos 6 caracteres.";
   }
 
   return getPasswordValidationError(password);
