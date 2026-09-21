@@ -9,6 +9,7 @@ import {
   deactivateLeader,
   deleteLeader,
   resetUserPassword,
+  transferUserToLeader,
 } from "@/lib/services/invitation";
 import {
   generateRegistrationToken,
@@ -344,6 +345,63 @@ export async function deleteLeaderAction(
   }
 
   return deleteResult;
+}
+
+export async function transferLeaderAction(
+  userId: string,
+  coordinatorId: string | null
+): Promise<ActionResult<{ id: string }>> {
+  const result = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!result?.session?.userId) {
+    return {
+      ok: false,
+      code: "UNAUTHENTICATED",
+      message: "Você precisa estar logado para transferir usuários",
+    };
+  }
+
+  if (result.user?.role !== "admin") {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Apenas administradores podem transferir usuários",
+    };
+  }
+
+  const transferResult = await transferUserToLeader({
+    userId,
+    coordinatorId,
+    actorId: result.session.userId,
+  });
+
+  if (transferResult.ok) {
+    revalidatePath("/dashboard/lideres");
+    revalidatePath(`/dashboard/lideres/${userId}`);
+    revalidatePath("/dashboard/coordenadores");
+    revalidatePath("/dashboard/eleitores");
+    revalidatePath("/dashboard");
+    await logAuditEvent({
+      action: "update",
+      entity: "user",
+      actorId: result.session.userId,
+      actorEmail: result.user?.email,
+      entityId: transferResult.data.id,
+      metadata: {
+        operation: "transfer_leader",
+        previousRole: transferResult.data.previousRole,
+        previousCoordinatorId: transferResult.data.previousCoordinatorId,
+        coordinatorId: transferResult.data.coordinatorId,
+        voterCount: transferResult.data.voterCount,
+      },
+    });
+  }
+
+  return transferResult.ok
+    ? { ok: true, data: { id: transferResult.data.id } }
+    : transferResult;
 }
 
 export async function generateVoterLinkAction(): Promise<

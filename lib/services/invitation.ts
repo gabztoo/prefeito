@@ -10,7 +10,7 @@ import {
   audit_event,
   registration_token,
 } from "@/db/schema";
-import { eq, and, gt, inArray, sql, count, or } from "drizzle-orm";
+import { eq, and, gt, inArray, sql, count, countDistinct, or } from "drizzle-orm";
 import { aliasedTable } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { ActionResult } from "@/lib/types";
@@ -113,7 +113,7 @@ export function getPasswordValidationError(password: unknown): string | null {
     password.length < PASSWORD_MIN_LENGTH ||
     password.length > PASSWORD_MAX_LENGTH
   ) {
-    return "A senha deve ter entre 12 e 128 caracteres.";
+    return "A senha deve ter entre 6 e 128 caracteres.";
   }
 
   return null;
@@ -123,7 +123,7 @@ export function getInitialPasswordValidationError(
   password: unknown
 ): string | null {
   if (password === LEADER_DEFAULT_PASSWORD) {
-    return "Escolha uma senha diferente da senha padrão com pelo menos 12 caracteres.";
+    return "Escolha uma senha diferente da senha padrão com pelo menos 6 caracteres.";
   }
 
   return getPasswordValidationError(password);
@@ -1259,6 +1259,227 @@ export async function deactivateCoordinator(
   }
 }
 
+export interface LeaderTransferValidationInput {
+  targetId: string;
+  targetRole: string | null;
+  coordinatorId: string | null;
+  coordinator?: { role: string | null; banned: boolean } | null;
+  dependentLeaderCount?: number;
+}
+
+/**
+ * Pure validation for transferring a user into the leader role.
+ * Keeps the business rules testable without touching the database.
+ */
+export function getLeaderTransferValidationError(
+  input: LeaderTransferValidationInput
+): string | null {
+  if (input.targetRole === "admin") {
+    return "Não é possível transferir um administrador para líder.";
+  }
+
+  if (input.targetRole === "coordinator" && (input.dependentLeaderCount ?? 0) > 0) {
+    return "Este coordenador possui líderes vinculados. Transfira os líderes antes de alterar o papel.";
+  }
+
+  if (input.coordinatorId === null) {
+    return null;
+  }
+
+  if (input.coordinatorId === input.targetId) {
+    return "O usuário não pode ser vinculado a si mesmo.";
+  }
+
+  if (!input.coordinator) {
+    return "Coordenador responsável não encontrado.";
+  }
+
+  if (input.coordinator.role !== "coordinator") {
+    return "O responsável selecionado não é um coordenador.";
+  }
+
+  if (input.coordinator.banned) {
+    return "O coordenador selecionado está desativado.";
+  }
+
+  return null;
+}
+
+export interface TransferLeaderInput {
+  userId: string;
+  coordinatorId: string | null;
+  actorId: string;
+}
+
+export interface TransferLeaderResult {
+  id: string;
+  previousRole: string | null;
+  previousCoordinatorId: string | null;
+  role: "leader";
+  coordinatorId: string | null;
+  voterCount: number;
+  roleChanged: boolean;
+}
+
+/**
+ * Safely moves an existing user into the leader role and links it to a
+ * coordinator. Voters and campaign links are preserved because the transfer
+ * only updates the user record; voters keep pointing at the same leader id.
+ */
+export async function transferUserToLeader(
+  input: TransferLeaderInput
+): Promise<ActionResult<TransferLeaderResult>> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [actor] = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .where(eq(user.id, input.actorId))
+        .limit(1);
+
+      if (actor?.role !== "admin") {
+        return {
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Apenas administradores podem transferir usuários.",
+        };
+      }
+
+      const lockId = getLockId(input.userId);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockId})`);
+
+      await tx.execute(sql`
+        SELECT u."id"
+        FROM "user" u
+        WHERE u."id" = ${input.userId}
+        FOR UPDATE OF u
+      `);
+
+      const [target] = await tx
+        .select({
+          id: user.id,
+          role: user.role,
+          banned: user.banned,
+          coordinatorId: user.coordinatorId,
+        })
+        .from(user)
+        .where(eq(user.id, input.userId))
+        .limit(1);
+
+      if (!target) {
+        return {
+          ok: false,
+          code: "NOT_FOUND",
+          message: "Usuário não encontrado.",
+        };
+      }
+
+      let coordinator: { role: string | null; banned: boolean } | null = null;
+      if (input.coordinatorId) {
+        await tx.execute(sql`
+          SELECT u."id"
+          FROM "user" u
+          WHERE u."id" = ${input.coordinatorId}
+          FOR UPDATE OF u
+        `);
+
+        const [coordinatorRecord] = await tx
+          .select({ role: user.role, banned: user.banned })
+          .from(user)
+          .where(eq(user.id, input.coordinatorId))
+          .limit(1);
+
+        coordinator = coordinatorRecord ?? null;
+      }
+
+      let dependentLeaderCount = 0;
+      if (target.role === "coordinator") {
+        const [dependent] = await tx
+          .select({ total: count() })
+          .from(user)
+          .where(eq(user.coordinatorId, target.id));
+        dependentLeaderCount = Number(dependent?.total ?? 0);
+      }
+
+      const validationError = getLeaderTransferValidationError({
+        targetId: target.id,
+        targetRole: target.role,
+        coordinatorId: input.coordinatorId,
+        coordinator,
+        dependentLeaderCount,
+      });
+
+      if (validationError) {
+        return {
+          ok: false,
+          code: "VALIDATION_ERROR",
+          message: validationError,
+        };
+      }
+
+      const now = new Date();
+      const roleChanged = target.role !== "leader";
+
+      await tx
+        .update(user)
+        .set({
+          role: "leader",
+          coordinatorId: input.coordinatorId,
+          updatedAt: now,
+        })
+        .where(eq(user.id, input.userId));
+
+      if (roleChanged) {
+        await tx
+          .update(registration_token)
+          .set({ active: false, updatedAt: now })
+          .where(
+            and(
+              eq(registration_token.coordinatorId, input.userId),
+              eq(registration_token.active, true)
+            )
+          );
+
+        await tx.delete(session).where(eq(session.userId, input.userId));
+      }
+
+      const leaderLinkIds = tx
+        .select({ id: campaign_leader.id })
+        .from(campaign_leader)
+        .where(eq(campaign_leader.leaderId, input.userId));
+
+      const [voterCountResult] = await tx
+        .select({ total: countDistinct(voter.id) })
+        .from(voter)
+        .where(
+          or(
+            eq(voter.leaderId, input.userId),
+            inArray(voter.campaignLeaderId, leaderLinkIds)
+          )
+        );
+
+      return {
+        ok: true,
+        data: {
+          id: input.userId,
+          previousRole: target.role,
+          previousCoordinatorId: target.coordinatorId,
+          role: "leader",
+          coordinatorId: input.coordinatorId,
+          voterCount: Number(voterCountResult?.total ?? 0),
+          roleChanged,
+        },
+      };
+    });
+  } catch {
+    return {
+      ok: false,
+      code: "INTERNAL_ERROR",
+      message: "Erro ao transferir usuário. Tente novamente.",
+    };
+  }
+}
+
 export interface LeaderWithVoterCount {
   id: string;
   name: string;
@@ -1434,7 +1655,9 @@ export interface LeaderWithVoters {
   localAtuacao: string | null;
   banned: boolean;
   invitationStatus: string | null;
+  coordinatorId: string | null;
   coordinatorName: string | null;
+  voterCount: number;
   voters: Array<{
     id: string;
     name: string;
@@ -1474,6 +1697,7 @@ export async function listLeadersWithVoters(
       section: string | null;
       localAtuacao: string | null;
       banned: boolean;
+      coordinatorId: string | null;
       coordinatorName: string | null;
     }> = await db
       .select({
@@ -1488,6 +1712,7 @@ export async function listLeadersWithVoters(
         section: user.section,
         localAtuacao: user.localAtuacao,
         banned: user.banned,
+        coordinatorId: user.coordinatorId,
         coordinatorName: coordinator.name,
       })
       .from(user)
@@ -1518,53 +1743,36 @@ export async function listLeadersWithVoters(
 
         const linkIds = leaderLinks.map((l) => l.id);
 
-        let voters: Array<{
-          id: string;
-          name: string;
-          cpf: string | null;
-          zone: string;
-          section: string;
-          phone: string;
-          voterTitle: string | null;
-        }> = [];
+        const scope =
+          linkIds.length > 0
+            ? or(
+                inArray(voter.campaignLeaderId, linkIds),
+                eq(voter.leaderId, leader.id)
+              )
+            : eq(voter.leaderId, leader.id);
 
-        if (linkIds.length > 0) {
-          const voterResults = await db
-            .select({
-              id: voter.id,
-              name: voter.name,
-              zone: voter.zone,
-              section: voter.section,
-              phone: voter.phone,
-              voterTitle: voter.voterTitle,
-            })
-            .from(voter)
-            .where(or(inArray(voter.campaignLeaderId, linkIds), eq(voter.leaderId, leader.id)))
-            .limit(100);
+        const [{ total: voterTotal }] = await db
+          .select({ total: countDistinct(voter.id) })
+          .from(voter)
+          .where(scope);
 
-          voters = voterResults.map((v) => ({
-            ...v,
-            cpf: null,
-          }));
-        } else {
-          const voterResults = await db
-            .select({
-              id: voter.id,
-              name: voter.name,
-              zone: voter.zone,
-              section: voter.section,
-              phone: voter.phone,
-              voterTitle: voter.voterTitle,
-            })
-            .from(voter)
-            .where(eq(voter.leaderId, leader.id))
-            .limit(100);
+        const voterResults = await db
+          .select({
+            id: voter.id,
+            name: voter.name,
+            zone: voter.zone,
+            section: voter.section,
+            phone: voter.phone,
+            voterTitle: voter.voterTitle,
+          })
+          .from(voter)
+          .where(scope)
+          .limit(100);
 
-          voters = voterResults.map((v) => ({
-            ...v,
-            cpf: null,
-          }));
-        }
+        const voters = voterResults.map((v) => ({
+          ...v,
+          cpf: null,
+        }));
 
         return {
           ...leader,
@@ -1573,6 +1781,7 @@ export async function listLeadersWithVoters(
           section: leader.section || null,
           invitationStatus,
           coordinatorName: leader.coordinatorName || null,
+          voterCount: Number(voterTotal),
           voters,
         };
       })

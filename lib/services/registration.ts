@@ -401,7 +401,7 @@ function getPasswordValidationError(password: unknown): string | null {
     password.length < PASSWORD_MIN_LENGTH ||
     password.length > PASSWORD_MAX_LENGTH
   ) {
-    return "A senha deve ter entre 12 e 128 caracteres.";
+    return "A senha deve ter entre 6 e 128 caracteres.";
   }
   return null;
 }
