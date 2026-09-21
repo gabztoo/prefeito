@@ -92,4 +92,17 @@ describe("leader transfer validation", () => {
       "Este coordenador possui líderes vinculados. Transfira os líderes antes de alterar o papel."
     );
   });
+
+  it("blocks demoting a coordinator with leaders even without a new coordinator", () => {
+    expect(
+      getLeaderTransferValidationError({
+        targetId: "coordinator-1",
+        targetRole: "coordinator",
+        coordinatorId: null,
+        dependentLeaderCount: 1,
+      })
+    ).toBe(
+      "Este coordenador possui líderes vinculados. Transfira os líderes antes de alterar o papel."
+    );
+  });
 });

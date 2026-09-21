@@ -1278,6 +1278,10 @@ export function getLeaderTransferValidationError(
     return "Não é possível transferir um administrador para líder.";
   }
 
+  if (input.targetRole === "coordinator" && (input.dependentLeaderCount ?? 0) > 0) {
+    return "Este coordenador possui líderes vinculados. Transfira os líderes antes de alterar o papel.";
+  }
+
   if (input.coordinatorId === null) {
     return null;
   }
@@ -1296,10 +1300,6 @@ export function getLeaderTransferValidationError(
 
   if (input.coordinator.banned) {
     return "O coordenador selecionado está desativado.";
-  }
-
-  if (input.targetRole === "coordinator" && (input.dependentLeaderCount ?? 0) > 0) {
-    return "Este coordenador possui líderes vinculados. Transfira os líderes antes de alterar o papel.";
   }
 
   return null;
@@ -1430,6 +1430,16 @@ export async function transferUserToLeader(
         .where(eq(user.id, input.userId));
 
       if (roleChanged) {
+        await tx
+          .update(registration_token)
+          .set({ active: false, updatedAt: now })
+          .where(
+            and(
+              eq(registration_token.coordinatorId, input.userId),
+              eq(registration_token.active, true)
+            )
+          );
+
         await tx.delete(session).where(eq(session.userId, input.userId));
       }
 

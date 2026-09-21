@@ -127,20 +127,23 @@ export default async function LeaderVotersPage({ params, searchParams }: Props) 
           <Card className="mt-4">
             <CardContent className="pt-6">
               <p className="text-muted-foreground text-center">
-                Este líder ainda não possui eleitores cadastrados.
+                {total === 0
+                  ? "Este líder ainda não possui eleitores cadastrados."
+                  : "Nenhum eleitor nesta página."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          <>
-            <VotersTable voters={voters} isAdmin={isAdmin} />
-            <VotersPagination
-              total={total}
-              page={page}
-              limit={limit}
-              basePath={`/dashboard/lideres/${leader.id}`}
-            />
-          </>
+          <VotersTable voters={voters} isAdmin={isAdmin} />
+        )}
+
+        {total > 0 && (
+          <VotersPagination
+            total={total}
+            page={page}
+            limit={limit}
+            basePath={`/dashboard/lideres/${leader.id}`}
+          />
         )}
       </div>
     </section>
