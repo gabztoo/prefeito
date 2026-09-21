@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { listLeadersWithVoters } from "@/lib/services/invitation";
+import { listCoordinators, listLeadersWithVoters } from "@/lib/services/invitation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { LeaderActions } from "./leader-actions";
 import { GenerateLinkDialog } from "./generate-link-dialog";
+import { ReassignCoordinatorDialog } from "./reassign-coordinator-dialog";
 import { generateLeaderLinkAction } from "./actions";
 
 export default async function LideresPage() {
@@ -41,6 +42,15 @@ export default async function LideresPage() {
   }
 
   const { leaders, total } = leadersResult.data;
+
+  const isAdmin = result.user?.role === "admin";
+  const coordinatorsResult = isAdmin ? await listCoordinators() : null;
+  const coordinators = coordinatorsResult?.ok
+    ? coordinatorsResult.data.coordinators.map((coordinator) => ({
+        id: coordinator.id,
+        name: coordinator.name,
+      }))
+    : [];
 
   const getStatusBadge = (banned: boolean, invitationStatus: string | null) => {
     if (banned) {
@@ -93,7 +103,14 @@ export default async function LideresPage() {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-lg truncate">{leader.name}</CardTitle>
+                      <CardTitle className="text-lg truncate">
+                        <Link
+                          href={`/dashboard/lideres/${leader.id}`}
+                          className="transition-colors hover:text-primary hover:underline"
+                        >
+                          {leader.name}
+                        </Link>
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1 truncate">
                         {leader.email}
                       </p>
@@ -141,7 +158,7 @@ export default async function LideresPage() {
                     )}
                     <div>
                       <span className="text-muted-foreground">Eleitores: </span>
-                      <span>{leader.voters.length}</span>
+                      <span>{leader.voterCount}</span>
                     </div>
                   </div>
                   {leader.cep && (
@@ -214,8 +231,27 @@ export default async function LideresPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-end mt-4 pt-3 border-t">
-                    <LeaderActions leaderId={leader.id} disabled={leader.banned} isAdmin={result.user?.role === "admin"} />
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/lideres/${leader.id}`}>
+                        Ver eleitores ({leader.voterCount})
+                      </Link>
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <ReassignCoordinatorDialog
+                          leaderId={leader.id}
+                          leaderName={leader.name}
+                          currentCoordinatorId={leader.coordinatorId}
+                          coordinators={coordinators}
+                        />
+                      )}
+                      <LeaderActions
+                        leaderId={leader.id}
+                        disabled={leader.banned}
+                        isAdmin={isAdmin}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>

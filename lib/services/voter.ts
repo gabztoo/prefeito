@@ -1,6 +1,6 @@
 import { db } from "@/db/drizzle";
 import { voter, campaign_leader, campaign, user } from "@/db/schema";
-import { eq, and, asc, desc, inArray, or, sql, count } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, or, sql, count, countDistinct } from "drizzle-orm";
 import { validateVoterData } from "@/lib/validation";
 import { normalizePhone } from "@/lib/normalization";
 import { isHoneypotFilled, getIpFromHeaders, normalizeIp, getCurrentWindow, incrementRateLimit } from "@/lib/rate-limit";
@@ -843,6 +843,168 @@ export async function deleteVoter(
   return {
     ok: true,
     data: { id: voterId },
+  };
+}
+
+export interface LeaderVoterSummary {
+  id: string;
+  name: string;
+  email: string;
+  coordinatorId: string | null;
+  coordinatorName: string | null;
+  banned: boolean;
+  voterTitle: string | null;
+  zone: string | null;
+  section: string | null;
+}
+
+/**
+ * Lists only the voters linked to a single leader.
+ *
+ * Access rules:
+ * - admin: any leader;
+ * - coordinator: only leaders linked to them;
+ * - leader: only their own voters.
+ */
+export async function listVotersByLeader(
+  leaderUserId: string,
+  requesterId: string,
+  requesterRole: string,
+  options?: { page?: number; limit?: number }
+): Promise<
+  ActionResult<{
+    leader: LeaderVoterSummary;
+    voters: Array<{
+      id: string;
+      name: string;
+      motherName: string;
+      birthDate: string;
+      zone: string;
+      section: string;
+      phone: string;
+      voterTitle: string | null;
+      campaignId: string | null;
+      campaignLeaderId: string | null;
+      leaderName: string | null;
+      createdAt: Date;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }>
+> {
+  const page = options?.page || 1;
+  const limit = Math.min(options?.limit || 25, 100);
+  const offset = (page - 1) * limit;
+
+  const [leader] = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      coordinatorId: user.coordinatorId,
+      banned: user.banned,
+      voterTitle: user.voterTitle,
+      zone: user.zone,
+      section: user.section,
+    })
+    .from(user)
+    .where(eq(user.id, leaderUserId))
+    .limit(1);
+
+  if (!leader || leader.role !== "leader") {
+    return {
+      ok: false,
+      code: "NOT_FOUND",
+      message: "Líder não encontrado.",
+    };
+  }
+
+  const canAccess =
+    requesterRole === "admin" ||
+    (requesterRole === "coordinator" && leader.coordinatorId === requesterId) ||
+    (requesterRole === "leader" && leader.id === requesterId);
+
+  if (!canAccess) {
+    return {
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Você não tem acesso aos eleitores deste líder.",
+    };
+  }
+
+  let coordinatorName: string | null = null;
+  if (leader.coordinatorId) {
+    const [coordinator] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, leader.coordinatorId))
+      .limit(1);
+    coordinatorName = coordinator?.name ?? null;
+  }
+
+  const leaderLinkIds = db
+    .select({ id: campaign_leader.id })
+    .from(campaign_leader)
+    .where(
+      and(
+        eq(campaign_leader.leaderId, leaderUserId),
+        eq(campaign_leader.active, true)
+      )
+    );
+
+  const scope = or(
+    eq(voter.leaderId, leaderUserId),
+    inArray(voter.campaignLeaderId, leaderLinkIds)
+  );
+
+  const [{ total }] = await db
+    .select({ total: countDistinct(voter.id) })
+    .from(voter)
+    .where(scope);
+
+  const voters = await db
+    .selectDistinct({
+      id: voter.id,
+      name: voter.name,
+      motherName: voter.motherName,
+      birthDate: voter.birthDate,
+      zone: voter.zone,
+      section: voter.section,
+      phone: voter.phone,
+      voterTitle: voter.voterTitle,
+      campaignId: voter.campaignId,
+      campaignLeaderId: voter.campaignLeaderId,
+      leaderName: user.name,
+      createdAt: voter.createdAt,
+    })
+    .from(voter)
+    .leftJoin(user, eq(voter.leaderId, user.id))
+    .where(scope)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(desc(voter.createdAt), asc(voter.id));
+
+  return {
+    ok: true,
+    data: {
+      leader: {
+        id: leader.id,
+        name: leader.name,
+        email: leader.email,
+        coordinatorId: leader.coordinatorId,
+        coordinatorName,
+        banned: leader.banned,
+        voterTitle: leader.voterTitle,
+        zone: leader.zone,
+        section: leader.section,
+      },
+      voters,
+      total: Number(total),
+      page,
+      limit,
+    },
   };
 }
 

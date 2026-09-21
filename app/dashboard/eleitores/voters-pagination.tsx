@@ -9,9 +9,15 @@ interface VotersPaginationProps {
   total: number;
   page: number;
   limit: number;
+  basePath?: string;
 }
 
-export function VotersPagination({ total, page, limit }: VotersPaginationProps) {
+export function VotersPagination({
+  total,
+  page,
+  limit,
+  basePath = "/dashboard/eleitores",
+}: VotersPaginationProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const totalPages = Math.ceil(total / limit);
@@ -24,7 +30,7 @@ export function VotersPagination({ total, page, limit }: VotersPaginationProps) 
     startTransition(() => {
       const params = new URLSearchParams(window.location.search);
       params.set("page", String(newPage));
-      router.push(`/dashboard/eleitores?${params.toString()}`);
+      router.push(`${basePath}?${params.toString()}`);
     });
   };
 
