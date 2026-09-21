@@ -48,7 +48,10 @@ export default async function EleitoresPage({ searchParams }: Props) {
     getVoterStatsAction(),
   ]);
 
-  const isAdmin = result.user?.role === "admin";
+  const role = result.user?.role ?? "leader";
+  const isAdmin = role === "admin";
+  const isCoordinator = role === "coordinator";
+  const canEdit = isAdmin || isCoordinator || role === "leader";
 
   return (
     <section className="flex flex-col items-start justify-start p-4 sm:p-6 w-full">
@@ -58,7 +61,9 @@ export default async function EleitoresPage({ searchParams }: Props) {
           <p className="text-sm sm:text-base text-muted-foreground">
             {isAdmin
               ? "Gerencie todos os eleitores cadastrados"
-              : "Veja seus eleitores cadastrados"}
+              : isCoordinator
+              ? "Acompanhe e corrija os eleitores dos seus líderes"
+              : "Acompanhe e corrija os seus eleitores cadastrados"}
           </p>
         </div>
         <div className="mt-4 flex justify-between items-center">
@@ -107,7 +112,8 @@ export default async function EleitoresPage({ searchParams }: Props) {
             ) : (
               <VotersTable
                 voters={votersResult.data.voters}
-                isAdmin={isAdmin}
+                canEdit={canEdit}
+                canDelete={isAdmin}
               />
             )}
 

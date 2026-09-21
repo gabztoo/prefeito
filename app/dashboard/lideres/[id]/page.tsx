@@ -71,6 +71,7 @@ export default async function LeaderVotersPage({ params, searchParams }: Props) 
 
   const { leader, voters, total, limit } = votersResult.data;
   const isAdmin = role === "admin";
+  const canEdit = isAdmin || role === "coordinator";
 
   return (
     <section className="flex flex-col items-start justify-start p-4 sm:p-6 w-full">
@@ -134,7 +135,7 @@ export default async function LeaderVotersPage({ params, searchParams }: Props) 
             </CardContent>
           </Card>
         ) : (
-          <VotersTable voters={voters} isAdmin={isAdmin} />
+          <VotersTable voters={voters} canEdit={canEdit} canDelete={isAdmin} />
         )}
 
         {total > 0 && (

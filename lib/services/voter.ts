@@ -679,8 +679,83 @@ export async function getVoterStats(
   };
 }
 
+export interface VoterEditAccessInput {
+  role: string;
+  requesterId: string;
+  voterLeaderId: string | null;
+  voterCampaignLeaderId: string | null;
+  ownedLeaderIds: string[];
+  ownedCampaignLeaderIds: string[];
+}
+
 /**
- * Edit a voter (admin only)
+ * Pure authorization rule for editing a voter.
+ * Admin may edit any voter; a leader may edit voters they own; a coordinator
+ * may edit voters owned by the leaders linked to them.
+ */
+export function canEditVoter(input: VoterEditAccessInput): boolean {
+  if (input.role === "admin") {
+    return true;
+  }
+
+  if (
+    input.voterLeaderId !== null &&
+    input.ownedLeaderIds.includes(input.voterLeaderId)
+  ) {
+    return true;
+  }
+
+  if (
+    input.voterCampaignLeaderId !== null &&
+    input.ownedCampaignLeaderIds.includes(input.voterCampaignLeaderId)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function getVoterEditScope(
+  userId: string,
+  role: string
+): Promise<{ ownedLeaderIds: string[]; ownedCampaignLeaderIds: string[] }> {
+  if (role === "admin") {
+    return { ownedLeaderIds: [], ownedCampaignLeaderIds: [] };
+  }
+
+  let ownedLeaderIds: string[] = [];
+
+  if (role === "coordinator") {
+    const leaders = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(
+        and(eq(user.role, "leader"), eq(user.coordinatorId, userId))
+      );
+    ownedLeaderIds = leaders.map((leader) => leader.id);
+  } else {
+    ownedLeaderIds = [userId];
+  }
+
+  let ownedCampaignLeaderIds: string[] = [];
+  if (ownedLeaderIds.length > 0) {
+    const links = await db
+      .select({ id: campaign_leader.id })
+      .from(campaign_leader)
+      .where(
+        and(
+          inArray(campaign_leader.leaderId, ownedLeaderIds),
+          eq(campaign_leader.active, true)
+        )
+      );
+    ownedCampaignLeaderIds = links.map((link) => link.id);
+  }
+
+  return { ownedLeaderIds, ownedCampaignLeaderIds };
+}
+
+/**
+ * Edit a voter (admin, or a coordinator/leader within their own scope)
  */
 export async function editVoter(
   voterId: string,
@@ -695,11 +770,11 @@ export async function editVoter(
   userId: string,
   role: string
 ): Promise<ActionResult<{ id: string }>> {
-  if (role !== "admin") {
+  if (role !== "admin" && role !== "coordinator" && role !== "leader") {
     return {
       ok: false,
       code: "FORBIDDEN",
-      message: "Apenas administradores podem editar eleitores",
+      message: "Você não tem permissão para editar eleitores",
     };
   }
 
@@ -715,6 +790,26 @@ export async function editVoter(
       code: "NOT_FOUND",
       message: "Eleitor não encontrado",
     };
+  }
+
+  if (role !== "admin") {
+    const scope = await getVoterEditScope(userId, role);
+
+    const allowed = canEditVoter({
+      role,
+      requesterId: userId,
+      voterLeaderId: existing[0].leaderId,
+      voterCampaignLeaderId: existing[0].campaignLeaderId,
+      ...scope,
+    });
+
+    if (!allowed) {
+      return {
+        ok: false,
+        code: "FORBIDDEN",
+        message: "Você não tem permissão para editar este eleitor",
+      };
+    }
   }
 
   const validation = validateVoterData({
