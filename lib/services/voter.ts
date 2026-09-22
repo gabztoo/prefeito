@@ -1,7 +1,7 @@
 import { db } from "@/db/drizzle";
 import { voter, campaign_leader, campaign, user } from "@/db/schema";
 import { eq, and, asc, desc, inArray, or, sql, count, countDistinct } from "drizzle-orm";
-import { validateVoterData } from "@/lib/validation";
+import { validateVoterData, validateVoterTitle } from "@/lib/validation";
 import { normalizePhone } from "@/lib/normalization";
 import { isHoneypotFilled, getIpFromHeaders, normalizeIp, getCurrentWindow, incrementRateLimit } from "@/lib/rate-limit";
 import type { ActionResult } from "@/lib/types";
@@ -773,6 +773,7 @@ export async function editVoter(
     zone?: string;
     section?: string;
     phone?: string;
+    voterTitle?: string;
   },
   userId: string,
   role: string
@@ -841,6 +842,7 @@ export async function editVoter(
     zone: string;
     section: string;
     phone: string;
+    voterTitle: string | null;
   }> = {};
 
   if (data.name !== undefined) updateData.name = normalizedData.name;
@@ -848,6 +850,13 @@ export async function editVoter(
   if (data.birthDate !== undefined) updateData.birthDate = normalizedData.birthDate;
   if (data.zone !== undefined) updateData.zone = normalizedData.zone;
   if (data.section !== undefined) updateData.section = normalizedData.section;
+  if (data.voterTitle !== undefined) {
+    const titleResult = validateVoterTitle(data.voterTitle);
+    if (!titleResult.ok) {
+      return titleResult;
+    }
+    updateData.voterTitle = titleResult.data;
+  }
   if (data.phone !== undefined) {
     if (normalizedData.phone !== existing[0].phone) {
       const duplicate = await db

@@ -96,6 +96,25 @@ export function validatePhone(phone: string): ValidationResult<string> {
   return { ok: true, data: normalized };
 }
 
+export function validateVoterTitle(voterTitle: string): ValidationResult<string | null> {
+  const trimmed = voterTitle.trim();
+  if (!trimmed) {
+    return { ok: true, data: null };
+  }
+
+  if (!/^\d{12}$/.test(trimmed)) {
+    const message = "Título de eleitor deve conter 12 dígitos";
+    return {
+      ok: false,
+      code: "VALIDATION_ERROR",
+      message,
+      fieldErrors: { voterTitle: [message] },
+    };
+  }
+
+  return { ok: true, data: trimmed };
+}
+
 export function validateBirthDate(birthDate: string): ValidationResult<string> {
   const trimmed = birthDate.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
