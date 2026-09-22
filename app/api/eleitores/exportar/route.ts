@@ -26,6 +26,7 @@ export async function GET(request: Request) {
   const filters = {
     campaignId: searchParams.get("campaignId") || undefined,
     leaderId: searchParams.get("leaderId") || undefined,
+    leaderUserId: searchParams.get("leaderUserId") || undefined,
     zone: searchParams.get("zone") || undefined,
     section: searchParams.get("section") || undefined,
     search: searchParams.get("search") || undefined,

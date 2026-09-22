@@ -1,4 +1,4 @@
-import { listVoters } from "@/lib/services/voter";
+import { listVoters, listVotersByLeader } from "@/lib/services/voter";
 import { buildVoterWorkbook } from "@/lib/voter-export";
 
 const MAX_EXPORT_RECORDS = 100_000;
@@ -7,6 +7,7 @@ const EXPORT_PAGE_SIZE = 100;
 export type ExportFilters = {
   campaignId?: string;
   leaderId?: string;
+  leaderUserId?: string;
   zone?: string;
   section?: string;
   search?: string;
@@ -34,21 +35,24 @@ export async function exportVotersXlsx(
   }
 
   try {
-    const firstPage = await listVoters(userId, role, {
-      ...filters,
-      page: 1,
-      limit: EXPORT_PAGE_SIZE,
-    });
+    const { leaderUserId, ...voterFilters } = filters;
+    const loadPage = (page: number) => leaderUserId
+      ? listVotersByLeader(leaderUserId, userId, role, { page, limit: EXPORT_PAGE_SIZE })
+      : listVoters(userId, role, { ...voterFilters, page, limit: EXPORT_PAGE_SIZE });
+
+    const firstPage = await loadPage(1);
 
     if (!firstPage.ok) {
       return {
         ok: false,
-        code: "INTERNAL_ERROR",
-        message: "Erro ao carregar eleitores para exportação",
+        code: firstPage.code === "FORBIDDEN" ? "FORBIDDEN" : "INTERNAL_ERROR",
+        message: firstPage.message,
       };
     }
 
-    const count = firstPage.data.totalFiltered;
+    const count = "total" in firstPage.data
+      ? firstPage.data.total
+      : firstPage.data.totalFiltered;
     if (count > MAX_EXPORT_RECORDS) {
       return {
         ok: false,
@@ -61,17 +65,13 @@ export async function exportVotersXlsx(
     const pageCount = Math.ceil(count / EXPORT_PAGE_SIZE);
 
     for (let page = 2; page <= pageCount; page++) {
-      const pageResult = await listVoters(userId, role, {
-        ...filters,
-        page,
-        limit: EXPORT_PAGE_SIZE,
-      });
+      const pageResult = await loadPage(page);
 
       if (!pageResult.ok) {
         return {
           ok: false,
-          code: "INTERNAL_ERROR",
-          message: "Erro ao carregar eleitores para exportação",
+          code: pageResult.code === "FORBIDDEN" ? "FORBIDDEN" : "INTERNAL_ERROR",
+          message: pageResult.message,
         };
       }
 
