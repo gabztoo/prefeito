@@ -8,6 +8,7 @@ import Link from "next/link";
 import { VotersTable } from "./voters-table";
 import { VotersFilters } from "./voters-filters";
 import { VotersPagination } from "./voters-pagination";
+import { VoterExportButton } from "./voter-export-button";
 import { GenerateLinkDialog } from "../lideres/generate-link-dialog";
 
 interface SearchParams {
@@ -72,7 +73,15 @@ export default async function EleitoresPage({ searchParams }: Props) {
               ? `${votersResult.data.totalFiltered.toLocaleString("pt-BR")} eleitor${votersResult.data.totalFiltered !== 1 ? "es" : ""} encontrado${votersResult.data.totalFiltered !== 1 ? "s" : ""}`
               : ""}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
+            <VoterExportButton
+              filters={{
+                leaderId: params.leaderId,
+                zone: params.zone,
+                section: params.section,
+                search: params.search,
+              }}
+            />
             <GenerateLinkDialog onGenerate={generateVoterLinkAction} />
             <Link href="/dashboard/eleitores/novo">
               <Button>Cadastrar</Button>

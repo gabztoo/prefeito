@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { exportCsv } from "@/lib/services/export";
+import { exportVotersXlsx } from "@/lib/services/export";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,39 +28,31 @@ export async function GET(request: Request) {
     leaderId: searchParams.get("leaderId") || undefined,
     zone: searchParams.get("zone") || undefined,
     section: searchParams.get("section") || undefined,
+    search: searchParams.get("search") || undefined,
   };
 
-  const exportResult = await exportCsv(session.user.id, session.user.role, filters);
+  const exportResult = await exportVotersXlsx(session.user.id, session.user.role, filters);
 
   if (!exportResult.ok) {
-    if (exportResult.code === "TOO_MANY_RECORDS") {
-      return new Response(
-        JSON.stringify({ error: exportResult.code, message: exportResult.message }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
     return new Response(
       JSON.stringify({ error: exportResult.code, message: exportResult.message }),
       {
-        status: 500,
+        status: exportResult.code === "TOO_MANY_RECORDS" ? 400
+          : exportResult.code === "FORBIDDEN" ? 403
+          : 500,
         headers: { "Content-Type": "application/json" },
       }
     );
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const filename = `eleitores-${timestamp}.csv`;
+  const filename = `eleitores-${timestamp}.xlsx`;
 
-  return new Response(exportResult.stream, {
+  return new Response(new Uint8Array(exportResult.buffer), {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
-      "Transfer-Encoding": "chunked",
     },
   });
 }

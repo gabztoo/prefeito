@@ -218,6 +218,7 @@ export async function listVoters(
       campaignId: string | null;
       campaignLeaderId: string | null;
       leaderName: string | null;
+      campaignName: string | null;
       createdAt: Date;
     }>;
     totalFiltered: number;
@@ -279,10 +280,12 @@ export async function listVoters(
         campaignId: voter.campaignId,
         campaignLeaderId: voter.campaignLeaderId,
         leaderName: user.name,
+        campaignName: campaign.name,
         createdAt: voter.createdAt,
       })
       .from(voter)
       .leftJoin(user, eq(voter.leaderId, user.id))
+      .leftJoin(campaign, eq(voter.campaignId, campaign.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
@@ -359,10 +362,12 @@ export async function listVoters(
         campaignId: voter.campaignId,
         campaignLeaderId: voter.campaignLeaderId,
         leaderName: user.name,
+        campaignName: campaign.name,
         createdAt: voter.createdAt,
       })
       .from(voter)
       .leftJoin(user, eq(voter.leaderId, user.id))
+      .leftJoin(campaign, eq(voter.campaignId, campaign.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
@@ -421,10 +426,12 @@ export async function listVoters(
       campaignId: voter.campaignId,
       campaignLeaderId: voter.campaignLeaderId,
       leaderName: user.name,
+      campaignName: campaign.name,
       createdAt: voter.createdAt,
     })
     .from(voter)
     .leftJoin(user, eq(voter.leaderId, user.id))
+    .leftJoin(campaign, eq(voter.campaignId, campaign.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .limit(limit)
     .offset(offset)
