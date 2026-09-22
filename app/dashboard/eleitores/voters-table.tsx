@@ -49,6 +49,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
     zone: voter.zone,
     section: voter.section,
     phone: voter.phone,
+    voterTitle: voter.voterTitle || '',
   });
 
   function openEditor() {
@@ -59,6 +60,7 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
       zone: voter.zone,
       section: voter.section,
       phone: voter.phone,
+      voterTitle: voter.voterTitle || '',
     });
     setError(null);
     setOpen(true);
@@ -127,6 +129,17 @@ function EditVoterDialog({ voter }: { voter: Voter }) {
               value={formData.birthDate}
               onChange={(event) => setFormData({ ...formData, birthDate: event.target.value })}
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`edit-voterTitle-${voter.id}`}>Título de eleitor (opcional)</Label>
+            <Input
+              id={`edit-voterTitle-${voter.id}`}
+              value={formData.voterTitle}
+              onChange={(event) => setFormData({ ...formData, voterTitle: event.target.value })}
+              inputMode="numeric"
+              maxLength={12}
+              autoComplete="off"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

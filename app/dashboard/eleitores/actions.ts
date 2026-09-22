@@ -99,6 +99,7 @@ export async function editVoterAction(
     zone?: string;
     section?: string;
     phone?: string;
+    voterTitle?: string;
   }
 ): Promise<ActionResult<{ id: string }>> {
   const result = await auth.api.getSession({
