@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { listVotersMock, buildVoterWorkbookMock } = vi.hoisted(() => ({
+const { listVotersMock, listVotersByLeaderMock, buildVoterWorkbookMock } = vi.hoisted(() => ({
   listVotersMock: vi.fn(),
+  listVotersByLeaderMock: vi.fn(),
   buildVoterWorkbookMock: vi.fn(),
 }));
 
-vi.mock("@/lib/services/voter", () => ({ listVoters: listVotersMock }));
+vi.mock("@/lib/services/voter", () => ({
+  listVoters: listVotersMock,
+  listVotersByLeader: listVotersByLeaderMock,
+}));
 vi.mock("@/lib/voter-export", () => ({ buildVoterWorkbook: buildVoterWorkbookMock }));
 
 import { exportVotersXlsx } from "@/lib/services/export";
@@ -76,6 +80,62 @@ describe("exportVotersXlsx", () => {
 
     expect(result).toMatchObject({ ok: false, code: "FORBIDDEN" });
     expect(listVotersMock).not.toHaveBeenCalled();
+    expect(listVotersByLeaderMock).not.toHaveBeenCalled();
+    expect(buildVoterWorkbookMock).not.toHaveBeenCalled();
+  });
+
+  it("exports only the selected leader's voters using the authorized per-leader listing", async () => {
+    listVotersByLeaderMock.mockImplementation(async (_leaderId, _requesterId, _role, options) => ({
+      ok: true,
+      data: {
+        leader: { id: "leader-user-1", name: "Gabriel" },
+        voters: options.page === 1
+          ? [{ ...voter, leaderName: null }]
+          : [{ ...voter, id: "voter-2", leaderName: null }],
+        total: 101,
+        page: options.page,
+        limit: 100,
+      },
+    }));
+
+    const result = await exportVotersXlsx("coordinator-1", "coordinator", {
+      leaderUserId: "leader-user-1",
+    });
+
+    expect(result).toMatchObject({ ok: true, count: 101 });
+    expect(listVotersByLeaderMock).toHaveBeenNthCalledWith(
+      1,
+      "leader-user-1",
+      "coordinator-1",
+      "coordinator",
+      { page: 1, limit: 100 }
+    );
+    expect(listVotersByLeaderMock).toHaveBeenNthCalledWith(
+      2,
+      "leader-user-1",
+      "coordinator-1",
+      "coordinator",
+      { page: 2, limit: 100 }
+    );
+    expect(listVotersMock).not.toHaveBeenCalled();
+    expect(buildVoterWorkbookMock).toHaveBeenCalledWith([
+      { ...voter, leaderName: "Gabriel" },
+      { ...voter, id: "voter-2", leaderName: "Gabriel" },
+    ]);
+  });
+
+  it("preserves forbidden responses from the per-leader access check", async () => {
+    listVotersByLeaderMock.mockResolvedValue({
+      ok: false,
+      code: "FORBIDDEN",
+      message: "Você não tem acesso aos eleitores deste líder.",
+    });
+
+    const result = await exportVotersXlsx("coordinator-1", "coordinator", {
+      leaderUserId: "someone-elses-leader",
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "FORBIDDEN" });
     expect(buildVoterWorkbookMock).not.toHaveBeenCalled();
   });
 

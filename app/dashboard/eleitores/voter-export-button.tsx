@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 interface VoterExportButtonProps {
   filters: {
     leaderId?: string;
+    leaderUserId?: string;
     zone?: string;
     section?: string;
     search?: string;
   };
+  compact?: boolean;
 }
 
-export function VoterExportButton({ filters }: VoterExportButtonProps) {
+export function VoterExportButton({ filters, compact = false }: VoterExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   async function handleExport() {
@@ -54,6 +56,7 @@ export function VoterExportButton({ filters }: VoterExportButtonProps) {
     <Button
       type="button"
       variant="outline"
+      size={compact ? "sm" : "default"}
       onClick={handleExport}
       disabled={isExporting}
       aria-busy={isExporting}

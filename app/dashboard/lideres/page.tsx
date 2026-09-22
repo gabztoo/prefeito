@@ -10,6 +10,7 @@ import { LeaderActions } from "./leader-actions";
 import { GenerateLinkDialog } from "./generate-link-dialog";
 import { ReassignCoordinatorDialog } from "./reassign-coordinator-dialog";
 import { generateLeaderLinkAction } from "./actions";
+import { VoterExportButton } from "../eleitores/voter-export-button";
 
 export default async function LideresPage() {
   const result = await auth.api.getSession({
@@ -231,12 +232,18 @@ export default async function LideresPage() {
                     </div>
                   )}
 
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/dashboard/lideres/${leader.id}`}>
-                        Ver eleitores ({leader.voterCount})
-                      </Link>
-                    </Button>
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3 border-t">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/dashboard/lideres/${leader.id}`}>
+                          Ver eleitores ({leader.voterCount})
+                        </Link>
+                      </Button>
+                      <VoterExportButton
+                        filters={{ leaderUserId: leader.id }}
+                        compact
+                      />
+                    </div>
                     <div className="flex items-center gap-1">
                       {isAdmin && (
                         <ReassignCoordinatorDialog

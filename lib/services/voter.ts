@@ -997,6 +997,7 @@ export async function listVotersByLeader(
       campaignId: string | null;
       campaignLeaderId: string | null;
       leaderName: string | null;
+      campaignName: string | null;
       createdAt: Date;
     }>;
     total: number;
@@ -1088,10 +1089,12 @@ export async function listVotersByLeader(
       campaignId: voter.campaignId,
       campaignLeaderId: voter.campaignLeaderId,
       leaderName: user.name,
+      campaignName: campaign.name,
       createdAt: voter.createdAt,
     })
     .from(voter)
     .leftJoin(user, eq(voter.leaderId, user.id))
+    .leftJoin(campaign, eq(voter.campaignId, campaign.id))
     .where(scope)
     .limit(limit)
     .offset(offset)
