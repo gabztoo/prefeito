@@ -53,6 +53,9 @@ export async function exportVotersXlsx(
     const count = "total" in firstPage.data
       ? firstPage.data.total
       : firstPage.data.totalFiltered;
+    const selectedLeaderName = "leader" in firstPage.data
+      ? firstPage.data.leader.name
+      : null;
     if (count > MAX_EXPORT_RECORDS) {
       return {
         ok: false,
@@ -61,7 +64,10 @@ export async function exportVotersXlsx(
       };
     }
 
-    const voters = [...firstPage.data.voters];
+    const voters = firstPage.data.voters.map((voter) => ({
+      ...voter,
+      leaderName: leaderUserId ? selectedLeaderName : voter.leaderName,
+    }));
     const pageCount = Math.ceil(count / EXPORT_PAGE_SIZE);
 
     for (let page = 2; page <= pageCount; page++) {
@@ -75,7 +81,10 @@ export async function exportVotersXlsx(
         };
       }
 
-      voters.push(...pageResult.data.voters);
+      voters.push(...pageResult.data.voters.map((voter) => ({
+        ...voter,
+        leaderName: leaderUserId ? selectedLeaderName : voter.leaderName,
+      })));
     }
 
     const buffer = await buildVoterWorkbook(voters);

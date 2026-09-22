@@ -88,8 +88,10 @@ describe("exportVotersXlsx", () => {
     listVotersByLeaderMock.mockImplementation(async (_leaderId, _requesterId, _role, options) => ({
       ok: true,
       data: {
-        leader: { id: "leader-user-1" },
-        voters: options.page === 1 ? [voter] : [{ ...voter, id: "voter-2" }],
+        leader: { id: "leader-user-1", name: "Gabriel" },
+        voters: options.page === 1
+          ? [{ ...voter, leaderName: null }]
+          : [{ ...voter, id: "voter-2", leaderName: null }],
         total: 101,
         page: options.page,
         limit: 100,
@@ -117,8 +119,8 @@ describe("exportVotersXlsx", () => {
     );
     expect(listVotersMock).not.toHaveBeenCalled();
     expect(buildVoterWorkbookMock).toHaveBeenCalledWith([
-      voter,
-      { ...voter, id: "voter-2" },
+      { ...voter, leaderName: "Gabriel" },
+      { ...voter, id: "voter-2", leaderName: "Gabriel" },
     ]);
   });
 
